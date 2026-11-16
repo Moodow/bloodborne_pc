@@ -57,7 +57,19 @@ old MSYS2 to `PATH`, so `cp` and other coreutils resolve to binaries that fail t
 - a `windows-v*` tag builds everything and publishes two packages automatically
 - parallelism follows the real core count, ccache is reused, and failures leave diagnosable logs
 
-Those two areas are the complete difference from upstream. Every feature comes from upstream; this
+### 3. Updates come from this repository
+
+The launcher's update check used to be pinned to the upstream repository, and its Update button
+replaced `bin\` with the official build — the fix above went with it. Builds from this repository
+ask this repository for the newest release instead: an update updates to **this** build, never back
+to the official one.
+
+That channel has to be maintained: sync upstream, bump `FORK_REV`, tag, and only then is there
+something to update to (see the wiki's Release page). An installation still running the upstream
+launcher does not switch over by itself — the full package from this repository has to be unpacked
+over it once.
+
+Those three areas are the complete difference from upstream. Every feature comes from upstream; this
 fork adds no game features.
 
 ## Downloads
