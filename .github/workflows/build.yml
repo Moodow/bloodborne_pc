@@ -76,6 +76,11 @@ jobs:
         run: |
           git config --global core.autocrlf false
           export BB_GPU_TARGETS=bb-probe
+          # CI 上 C:/msys64 是 runner 预装的旧版 MSYS2。build.sh 会 source msys2-env.sh，
+          # 那里把 $msys2_root/usr/bin 插到 PATH 最前面，于是 cp 等 coreutils 解析到旧版
+          # 二进制，与当前 bash 已映射的新版 msys-2.0.dll 不符，exec 失败后 bash 报 127。
+          # 指向不存在的路径让脚本自行跳过 PATH 注入——setup-msys2 的工具链本来就在 PATH 里。
+          export MSYS2_ROOT=/nonexistent-msys2
           sed -i 's|ninja -C out/gpu|ninja -j2 -C out/gpu|' build.sh
           grep -n "ninja -j2" build.sh
           # 进程若被 OOM / 磁盘耗尽杀掉，后面的 trap 和 if 都不会执行，只能靠后台采样留证据。
@@ -129,6 +134,8 @@ jobs:
         run: |
           source ./msys2-env.sh
           echo "PATH=$PATH"
+          echo "--- cp 解析到哪 ---"; type -a cp 2>&1
+          echo "--- 旧版 cp 能否执行 ---"; /c/msys64/usr/bin/cp --version 2>&1 | head -2 || echo "旧版 cp 执行失败 rc=$?"
           time cp out/gpu/bb-probe.exe out/env-probe.exe 2>&1 && echo "ENV_OK" || echo "ENV_FAIL rc=$?"
           ls -l out/env-probe.exe 2>&1 || true
 
