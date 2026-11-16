@@ -108,39 +108,12 @@ jobs:
           fi
           exit $rc
 
-      - name: 诊断（总是执行）
-        if: always()
-        shell: msys2 {0}
-        run: |
-          echo "--- exe 产物 ---"; ls -l out/gpu/*.exe out/*.exe 2>&1 || true
-          echo "--- cp 身份 ---"; type -a cp 2>&1; cp --version 2>&1 | head -1
-          echo "--- out 目录 ---"; ls -ld out 2>&1; echo "PWD=$PWD"
-          echo "--- 磁盘 ---"; df -h . 2>&1 | tail -2
-          echo "--- 内存 ---"; head -3 /proc/meminfo 2>&1 || true
-          echo "--- 监控尾部 ---"; tail -20 monitor.log 2>/dev/null || echo "无 monitor.log"
-          echo "--- trace 尾部 ---"; tail -15 build-trace.txt 2>/dev/null || echo "无 trace"
-
-      - name: 诊断 cp（裸环境）
-        if: always()
-        shell: msys2 {0}
-        run: |
-          echo "PWD=$PWD"
-          time cp out/gpu/bb-probe.exe out/bare-probe.exe 2>&1 && echo "BARE_OK" || echo "BARE_FAIL rc=$?"
-          ls -l out/bare-probe.exe 2>&1 || true
-
-      - name: 诊断 cp（source msys2-env.sh 之后）
-        if: always()
-        shell: msys2 {0}
-        run: |
-          source ./msys2-env.sh
-          echo "PATH=$PATH"
-          echo "--- cp 解析到哪 ---"; type -a cp 2>&1
-          echo "--- 旧版 cp 能否执行 ---"; /c/msys64/usr/bin/cp --version 2>&1 | head -2 || echo "旧版 cp 执行失败 rc=$?"
-          time cp out/gpu/bb-probe.exe out/env-probe.exe 2>&1 && echo "ENV_OK" || echo "ENV_FAIL rc=$?"
-          ls -l out/env-probe.exe 2>&1 || true
-
       - name: 组装运行时（exe + 递归依赖的 DLL）
         shell: msys2 {0}
+        env:
+          # MSYS2 的 Python 在 Windows 上默认按 cp1252 输出，脚本里的中文提示会抛
+          # UnicodeEncodeError: 'charmap' codec can't encode。
+          PYTHONUTF8: "1"
         run: python tools/collect-runtime.py --exe out/gpu/bb-probe.exe --out dist/runtime.zip
 
       - name: 失败时导出日志
