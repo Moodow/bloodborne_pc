@@ -87,12 +87,10 @@ def saves_user_dir(s):
     its own characters (run.py COOP_SAVES), apart from the normal ones it would change."""
     user = Path(s.get('user_dir') or DATA_DIR / 'user')
     return user / saves.COOP_SAVES if plays_seamless(s) else user
-RELEASES_API = 'https://api.github.com/repos/Supermedo/bloodborne_pc/releases/latest'
-RELEASES_PAGE = 'https://github.com/Supermedo/bloodborne_pc/releases/latest'
 # The community site (install guide, FAQ, forum), linked from the side bar.
 COMMUNITY_SITE = 'https://bbport.de/'
-RELEASES_LIST_API = 'https://api.github.com/repos/Supermedo/bloodborne_pc/releases?per_page=100'
-# The betas (pre-releases v<VERSION>-beta.<N>): a beta asks here too, for the next one (update_to_offer).
+# The betas (pre-releases v<VERSION>-beta.<N>): a beta asks here too, for the next one (update_to_offer). Unused
+# here (BETA is 0, this fork publishes releases only), so it still names the upstream betas' repository.
 BETAS_API = 'https://api.github.com/repos/emurphy04/bloodborne_pc/releases?per_page=30'
 # The oldest version Advanced > Other versions offers: older ones cannot read today's settings. (A copy of
 # this launcher installs it, whatever version: update_installer.)
@@ -294,6 +292,7 @@ import bbport_lang_ko  # noqa: E402,F401 (Korean over the other tables)
 import bbport_fsr41_translations  # noqa: E402,F401
 import bbport_hardware as hardware  # noqa: E402
 import bbport_frame  # noqa: E402
+import bbport_fork as forked  # noqa: E402 (this fork's own releases: the update channel, the build's name)
 import bbport_display as display  # noqa: E402
 import bbport_saves as saves  # noqa: E402
 import bbport_exit_backup  # noqa: E402,F401 (bundled for run.py)
@@ -322,6 +321,10 @@ from bbport_input_config import (STICK_OUTPUTS, OUTPUT_LABELS, ACTION_GROUPS, SL
 import bbport_gamepad  # noqa: E402
 import bbport_respec as respec  # noqa: E402
 import bbport_textfile as textfile  # noqa: E402
+# This fork's distribution: the launcher updates itself from its own releases, and the screens say which build this
+# is (v1.9.8.6-moodow.2). Kept in launcher/bbport_fork.py, where a merge of upstream/windows cannot reach it.
+RELEASES_API, RELEASES_PAGE, RELEASES_LIST_API = forked.RELEASES_API, forked.RELEASES_PAGE, forked.RELEASES_LIST_API
+BUILD_TEXT = forked.build_text(VERSION_TEXT)
 
 LANG = 'en'
 
@@ -2139,7 +2142,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         words.pack(side='left', fill='x')
         tk.Label(words, text='BLOODBORNE', bg=BG, fg=theme.TEXT_STRONG, font=(theme.HEAD_BOLD, 14)).pack(anchor='w')
         tk.Label(words, text='PC PORT', bg=BG, fg=GOLD, font=(theme.HEAD, 8)).pack(anchor='w')
-        self.byline = tk.Label(side, text=_('by Super Medo') + f'  ·  v{VERSION_TEXT}' +
+        self.byline = tk.Label(side, text=_('by Super Medo') + f'  ·  v{BUILD_TEXT}' +
                                ('\n' + _('co-op test build') if COOP_TEST else ''),
                                bg=BG, fg=MUTED, justify='left', font=(theme.BODY, 9))
         self.byline_pads = ((px(2), px(8)), (0, px(4)))  # its gaps under the full head and the narrower ones
@@ -5060,7 +5063,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             side='left')
         ttk.Button(holder, text=_('Other versions…', 'Другие версии…'), command=self.choose_version).pack(
             side='left', padx=(6, 0))
-        ttk.Label(holder, text=f'v{VERSION_TEXT}', style='Muted.TLabel').pack(side='left', padx=10)
+        ttk.Label(holder, text=f'v{BUILD_TEXT}', style='Muted.TLabel').pack(side='left', padx=10)
         holder = ttk.Frame(f)
         holder.grid(row=self.next_row(f), column=0, columnspan=2, sticky='we', pady=(10, 0))
         ttk.Button(holder, text=_('Clear the shader cache'), command=self.clear_cache).pack(side='left')
@@ -5148,7 +5151,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         import platform
         import time as clock
         w, h = self.display_size()
-        info = {'Launcher': f'v{VERSION_TEXT}', 'Graphics card': self.gpu_line or '?',
+        info = {'Launcher': f'v{BUILD_TEXT}', 'Graphics card': self.gpu_line or '?',
                 'Processor': self.cpu.name if self.cpu else '?', 'Memory': f'{self.ram} GB', 'Display': f'{w} × {h}',
                 'Windows': platform.version(), 'Game': ' '.join(game_info(self.var('game_dir', 'app').get()) or ())}
         folder = self.tests_dir() / (clock.strftime('%Y-%m-%d_%H%M%S') + '_benchmark')
@@ -6265,7 +6268,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
         if not FROZEN or not url:  # a source tree updates with git
             webbrowser.open(page)
             return False
-        if version_tuple(version) < version_tuple(VERSION):
+        if version_tuple(version) < forked.own_version(VERSION):
             question = _('Install the older version {} now? The launcher closes, installs it and opens again. Saves and '
                          'settings are kept. To stay on it, switch off "Check for updates when the launcher opens".',
                          'Установить старую версию {} сейчас? Лаунчер закроется, установит её и откроется снова. '
@@ -6417,12 +6420,12 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                 label = f'v{version}'
                 if version == found[0][0]:
                     label += _(' (latest)', ' (последняя)')
-                if version_tuple(version) == version_tuple(VERSION):
+                if version_tuple(version) == forked.own_version(VERSION):
                     label += _(' (installed)', ' (установлена)')
                 labels.append(label)
             box.configure(values=labels, state='readonly')
             current = next((i for i, (v, _u, _p) in enumerate(found)
-                            if version_tuple(v) == version_tuple(VERSION)), 0)
+                            if version_tuple(v) == forked.own_version(VERSION)), 0)
             box.current(current)
             status.configure(text=_('Installed: v{}', 'Установлена: v{}').format(VERSION))
             self.versions_listed = True
@@ -6439,7 +6442,7 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
             if not release:
                 return
             version, url, page = release
-            if version_tuple(version) == version_tuple(VERSION):
+            if version_tuple(version) == forked.own_version(VERSION):
                 self.messagebox.showinfo('Bloodborne', _('Version {} is already installed.',
                                                          'Версия {} уже установлена.').format(version))
                 return
@@ -7062,7 +7065,7 @@ def latest_release():
                                                             'User-Agent': 'bbport-launcher'})
     with bbport_tls.urlopen(request, timeout=15) as response:
         release = json.load(response)
-    version = '.'.join(re.findall(r'\d+', release['tag_name']))
+    version = forked.tag_version(release.get('tag_name', ''))
     return version, game_zip(release), release.get('html_url') or RELEASES_PAGE
 
 
@@ -7095,7 +7098,8 @@ def update_to_offer():
     failure = None
     try:
         version, url, page = latest_release()
-        newer = version_tuple(version) > version_tuple(VERSION)
+        newer = version_tuple(version) > forked.own_version(VERSION)
+        # A beta's goal is the release of its own VERSION, whatever this fork's revision is.
         if newer or (BETA and version_tuple(version) == version_tuple(VERSION)):
             return version, url, page
     except Exception as error:
@@ -7111,12 +7115,16 @@ def update_to_offer():
 
 
 def game_zip(release):
-    """The download URL of a release's game package: Bloodborne-Windows.zip, else its one .zip that
-    is not a source archive. None when it cannot tell (the release page opens instead). Up to 1.9.5
-    beta 2 the launcher took the first .zip: with the FSR 4 source archive uploaded first, an update
-    downloaded that and stopped ("Bloodborne.exe is missing from the download")."""
+    """The download URL of a release's game package: a known package name (GAME_PACKAGES: upstream's
+    Bloodborne-Windows.zip, this fork's bbport-windows.zip — its release also carries a bb-probe-only.zip, which
+    the "its one other .zip" rule below would refuse), else its one .zip that is not a source archive. None when it
+    cannot tell (the release page opens instead). Up to 1.9.5 beta 2 the launcher took the first .zip: with the
+    FSR 4 source archive uploaded first, an update downloaded that and stopped ("Bloodborne.exe is missing from the
+    download")."""
     zips = [asset for asset in release.get('assets', []) if asset.get('name', '').lower().endswith('.zip')]
-    named = [asset for asset in zips if asset['name'].lower() == 'bloodborne-windows.zip']
+    # The name decides, upstream's name first: a release carrying both packages takes upstream's.
+    named = sorted((asset for asset in zips if asset['name'].lower() in forked.GAME_PACKAGES),
+                   key=lambda asset: forked.GAME_PACKAGES.index(asset['name'].lower()))[:1]
     games = named or [asset for asset in zips
                       if not re.search(r'(^|[-_.])(src|source|sources)([-_.]|$)', asset['name'].lower())]
     if len(games) != 1:
@@ -7138,7 +7146,7 @@ def installable_releases():
         tag = release.get('tag_name', '')
         if release.get('draft') or release.get('prerelease') or not tag.startswith('windows-v'):
             continue
-        version = '.'.join(re.findall(r'\d+', tag))
+        version = forked.tag_version(tag)
         if not version or version_tuple(version) < version_tuple(OLDEST_INSTALLABLE):
             continue
         url = game_zip(release)

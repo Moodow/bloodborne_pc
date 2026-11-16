@@ -25,6 +25,7 @@ sys.path.insert(0, str(ROOT / 'launcher'))
 sys.path.insert(0, str(ROOT / 'scripts'))
 import bbport_launcher_win as L  # noqa: E402
 import bbport_update as U  # noqa: E402
+import bbport_fork as F  # noqa: E402  (this fork's own releases)
 
 PACKAGE = ('Bloodborne.exe', 'Play Bloodborne.exe', 'run.py', '_internal/base_library.zip', 'bin/bb-probe.exe',
            'scripts/prepare.py', 'patches/Bloodborne.xml', 'launcher/bloodborne.ico')
@@ -822,6 +823,113 @@ class OneUpdateTests(unittest.TestCase):
             self.assertEqual(installer, folder / 'installer' / 'Bloodborne.exe')
             self.assertEqual(read(installer), 'this launcher')
             self.assertTrue((installer.parent / '_internal' / 'python314.dll').is_file())
+
+
+class ForkChannelTests(unittest.TestCase):
+    """This fork is a parallel distribution: its launcher updates itself from this repository's releases and never
+    from upstream's, so an update is an update of this build (the net fix stays). The release payloads are this
+    repository's own (Moodow/bloodborne_pc, tag windows-v<upstream>-moodow.<n>)."""
+
+    ASSETS = [{'name': 'bb-probe-only.zip', 'browser_download_url': 'https://example.invalid/probe.zip'},
+              {'name': 'bbport-windows.zip', 'browser_download_url': 'https://example.invalid/full.zip',
+               'digest': 'sha256:' + 'b' * 64},
+              {'name': 'fsr4vk-v0.4.3-amdfix-src.zip', 'browser_download_url': 'https://example.invalid/src.zip'}]
+
+    def release(self, tag, assets=None):
+        return {'tag_name': tag, 'html_url': f'https://example.invalid/{tag}',
+                'assets': self.ASSETS if assets is None else assets}
+
+    def test_the_fork_names_its_own_releases(self):
+        # The launcher still exports the three names (bbport_news and other tests read L.RELEASES_*): they are the
+        # fork's, from launcher/bbport_fork.py — the one file a merge of upstream cannot reach.
+        for url in (L.RELEASES_API, L.RELEASES_PAGE, L.RELEASES_LIST_API):
+            with self.subTest(url=url):
+                self.assertIn(F.REPOSITORY, url)
+                self.assertNotIn('Supermedo', url)
+        self.assertEqual((L.RELEASES_API, L.RELEASES_PAGE, L.RELEASES_LIST_API),
+                         (F.RELEASES_API, F.RELEASES_PAGE, F.RELEASES_LIST_API))
+
+    def test_the_full_package_is_picked_beside_the_fork_s_other_zips(self):
+        # bb-probe-only.zip is not a source archive: the "its one other .zip" rule would refuse both and offer
+        # nothing at all, so the package name decides.
+        self.assertEqual(L.game_zip(self.release('windows-v1.9.8.6-moodow.2')),
+                         'https://example.invalid/full.zip')
+        self.assertEqual(L.ASSET_DIGESTS['https://example.invalid/full.zip'], 'sha256:' + 'b' * 64)
+
+    def test_upstream_s_package_name_still_wins(self):
+        assets = [{'name': 'Bloodborne-Windows.zip', 'browser_download_url': 'https://example.invalid/up.zip'},
+                  *self.ASSETS]
+        self.assertEqual(L.game_zip(self.release('windows-v1.9.8.6', assets)), 'https://example.invalid/up.zip')
+
+    def test_a_tag_names_the_version_it_publishes(self):
+        self.assertEqual(F.tag_version('windows-v1.9.8.6-moodow.2'), '1.9.8.6-moodow.2')
+        self.assertEqual(F.tag_version('windows-v1.9.8.6'), '1.9.8.6')  # upstream's tags
+        self.assertEqual(F.tag_version('v1.9.8.6'), 'v1.9.8.6')  # no prefix known: taken as it is
+
+    def test_the_order_of_versions(self):
+        # The suffix is one more number: a -moodow build of 1.9.8.6 is newer than upstream's 1.9.8.6 and older
+        # than the next -moodow build of it, and any 1.9.9 build is newer than all of them.
+        ordered = ['1.9.8.6', '1.9.8.6-moodow.1', '1.9.8.6-moodow.2', '1.9.9', '1.9.9-moodow.1']
+        keys = [F.version_tuple(version) for version in ordered]
+        self.assertEqual(keys, sorted(keys))
+
+    def test_this_build_counts_as_its_fork_revision(self):
+        self.assertGreater(F.FORK_REV, 0, 'the fork publishes its own releases: its builds carry a revision')
+        self.assertEqual(F.own_version(L.VERSION), F.version_tuple(L.VERSION) + (F.FORK_REV,))
+        # An upstream build (FORK_REV 0, or a fork without its own releases) compares as its version only.
+        with mock.patch.object(F, 'FORK_REV', 0):
+            self.assertEqual(F.own_version(L.VERSION), F.version_tuple(L.VERSION))
+
+    def test_the_screens_say_which_build_this_is(self):
+        # A report or a screenshot has to name the fork's build, not just upstream's version; the What's new notes
+        # stay keyed by VERSION_TEXT (test_launcher_news).
+        self.assertEqual(L.BUILD_TEXT, F.build_text(L.VERSION_TEXT))
+        self.assertIn('-moodow.', L.BUILD_TEXT)
+        self.assertTrue(L.BUILD_TEXT.startswith(L.VERSION_TEXT))  # What's new is keyed by VERSION_TEXT
+
+    def own_tag(self, revision=None):
+        return f'{L.VERSION}-moodow.{F.FORK_REV if revision is None else revision}'
+
+    def test_this_build_is_not_offered_to_itself(self):
+        # The trap of a version that names its own release: the update box would appear at every start.
+        with mock.patch.object(L, 'latest_release', return_value=(self.own_tag(), 'u', 'p')):
+            self.assertIsNone(L.update_to_offer())
+
+    def test_the_next_build_of_this_fork_is_offered(self):
+        newer = self.own_tag(F.FORK_REV + 1)
+        with mock.patch.object(L, 'latest_release', return_value=(newer, 'u', 'p')):
+            self.assertEqual(L.update_to_offer(), (newer, 'u', 'p'))
+
+    def test_the_fork_s_older_build_is_not_offered(self):
+        with mock.patch.object(L, 'latest_release', return_value=(self.own_tag(F.FORK_REV - 1), 'u', 'p')):
+            self.assertIsNone(L.update_to_offer())
+
+    def test_upstream_s_own_release_is_not_this_distribution_s(self):
+        # Upstream's 1.9.8.6 is the version this build is made of: older than this build, and no update here.
+        with mock.patch.object(L, 'latest_release', return_value=(L.VERSION, 'u', 'p')):
+            self.assertIsNone(L.update_to_offer())
+
+    def test_a_newer_upstream_version_is_offered_once_the_fork_releases_it(self):
+        # After an upstream sync (VERSION 1.9.8.6 → 1.9.9) the fork releases its own build of the new version, and
+        # that is what an installed build has to be offered. Written off L.VERSION, not off a literal: the test has
+        # to keep holding in the tree a merge of upstream/windows produces.
+        numbers = [int(part) for part in L.VERSION.split('.')]
+        newer_upstream = '.'.join(str(number) for number in numbers[:-1] + [numbers[-1] + 1])
+        tag = f'{newer_upstream}-moodow.1'
+        with mock.patch.object(L, 'latest_release', return_value=(tag, 'u', 'p')):
+            self.assertEqual(L.update_to_offer(), (tag, 'u', 'p'))
+
+    def test_a_fork_package_is_a_complete_port_package(self):
+        # package.sh --zip-only writes out/stage/bbport-windows into the zip: the launcher finds it and the
+        # installer replaces the installation with it (check_package's folder).
+        temp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, temp, True)
+        archive = temp / 'bbport-windows.zip'
+        with zipfile.ZipFile(archive, 'w', zipfile.ZIP_DEFLATED) as package:
+            for name in ('Bloodborne.exe', 'run.py', 'bin/bb-probe.exe', '_internal/base_library.zip',
+                         '_internal/python314.dll'):
+                package.writestr('bbport-windows/' + name, f'contents of {name} ' * 50)
+        self.assertEqual(U.check_package(archive), 'bbport-windows/')
 
 
 if __name__ == '__main__':

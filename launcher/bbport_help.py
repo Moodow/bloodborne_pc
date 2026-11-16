@@ -825,7 +825,7 @@ class HelpMixin:
                             command=self.choose_version)
         button.pack(side='left', padx=(px(8), 0))
         self.index_entry(button, _('Other versions…', 'Другие версии…'), key='button:versions')
-        tk.Label(versions, text=_('Installed: v{}', 'Установлена: v{}').format(L.VERSION_TEXT),
+        tk.Label(versions, text=_('Installed: v{}', 'Установлена: v{}').format(L.BUILD_TEXT),
                  bg=theme.CARD, fg=theme.MUTED, font=(theme.BODY, 9)).pack(side='left', padx=(px(12), 0))
         self.link_row(f, _('Set everything up again, step by step.'), None, _('Repeat the setup'), self.open_setup)
         # What's new again, whenever: the Play page's line goes once it was seen (bbport_news).
