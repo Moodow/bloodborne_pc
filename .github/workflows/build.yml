@@ -87,8 +87,10 @@ jobs:
             -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
             -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="-O2 -g0" \
             -DCMAKE_C_FLAGS_RELWITHDEBINFO="-O2 -g0" > /dev/null
-          bash -x build.sh > build-trace.txt 2>&1
-          rc=$?
+          # tee 让输出实时进 Actions 日志：重定向到文件是全缓冲的，进程被硬杀时缓冲区里
+          # 的最后几十行会整体丢失，这正是之前每次只能看到 "+ cp" 的原因。
+          bash -x build.sh 2>&1 | tee build-trace.txt
+          rc=${PIPESTATUS[0]}
           kill $MON 2>/dev/null || true
           if [ "$rc" -ne 0 ]; then
             echo "=== build.sh rc=$rc ==="
@@ -100,6 +102,16 @@ jobs:
             echo "--- 产物 ---"; ls -l out/gpu/*.exe 2>/dev/null || true
           fi
           exit $rc
+
+      - name: 诊断（总是执行）
+        if: always()
+        shell: msys2 {0}
+        run: |
+          echo "--- exe 产物 ---"; ls -l out/gpu/*.exe out/*.exe 2>&1 || true
+          echo "--- 磁盘 ---"; df -h . 2>&1 | tail -2
+          echo "--- 内存 ---"; head -3 /proc/meminfo 2>&1 || true
+          echo "--- 监控尾部 ---"; tail -20 monitor.log 2>/dev/null || echo "无 monitor.log"
+          echo "--- trace 尾部 ---"; tail -15 build-trace.txt 2>/dev/null || echo "无 trace"
 
       - name: 组装运行时（exe + 递归依赖的 DLL）
         shell: msys2 {0}
