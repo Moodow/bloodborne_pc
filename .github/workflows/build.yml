@@ -13,7 +13,10 @@ name: build-windows
 on:
   push:
     branches:
+      - windows        # 默认分支即发布主线
       - 'ci/**'
+      - 'feat/**'
+      - 'fix/**'
     # 纯文档改动不必占用一次完整构建
     paths-ignore:
       - '**.md'
@@ -59,7 +62,7 @@ jobs:
           # 且 base 与包版本可能错配——症状就是本次耗时排查的 cp/exec 返回 127）。
           update: true
           install: >-
-            git patch zip unzip python ccache
+            git patch zip unzip python
             mingw-w64-clang-x86_64-toolchain
             mingw-w64-clang-x86_64-cmake
             mingw-w64-clang-x86_64-ninja
@@ -99,7 +102,16 @@ jobs:
           # 负载下超线程争抢严重）。保持 -j2。
           sed -i 's|ninja -C out/gpu|ninja -j2 -C out/gpu|' build.sh
           grep -n "ninja -j" build.sh
-          echo "可用核心: $(nproc)"; ccache --version 2>&1 | head -1 || echo "ccache 不可用"
+          echo "可用核心: $(nproc)"
+          # ccache-action 装的是 Windows 原生 ccache，但 msys2 shell 用 strict PATH 看不到它；
+          # 而 MSYS2 版 ccache 又把 CMake 传的 Windows 绝对路径当作找不到的编译器。
+          # 这里把 Windows 版加进 PATH，找不到就安静跳过，构建不受影响。
+          if win_ccache=$(cmd //c where ccache 2>/dev/null | tr -d '\r' | head -1) && [[ -n $win_ccache ]]; then
+            export PATH="$(dirname "$(cygpath -u "$win_ccache")"):$PATH"
+            echo "ccache: $win_ccache -> $(ccache --version 2>&1 | head -1)"
+          else
+            echo "未找到 Windows 版 ccache，本次编译不使用缓存"
+          fi
           # 进程若被 OOM / 磁盘耗尽杀掉，后面的 trap 和 if 都不会执行，只能靠后台采样留证据。
           ( while true; do date; df -h . | tail -1; head -3 /proc/meminfo; sleep 15; done ) > monitor.log 2>&1 &
           MON=$!
