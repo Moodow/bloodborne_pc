@@ -23,11 +23,15 @@ MINGW*|MSYS*)
     cmake -S gpu -B out/gpu -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBB_PGO=off \
         -DBB_LTO="${BB_LTO:-OFF}" -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ >/dev/null
     echo "GPU library and loader: LTO ${BB_LTO:-OFF}"
-    if ! ninja -C out/gpu bb-probe bb-gpu-capabilities bb-fg401-capabilities bb-play > out/gpu-build.log 2>&1; then
+    # CI 只需要 bb-probe：Windows 上 bbgpu 是 STATIC，其余三个工具会各自再静态链接
+    # 一份完整副本，在 2 核 / 7 GB runner 上额外吃掉数 GB 磁盘与链接内存。
+    # BB_GPU_TARGETS 用空格分隔，默认值保持本地行为不变。
+    read -r -a gpu_targets <<< "${BB_GPU_TARGETS:-bb-probe bb-gpu-capabilities bb-fg401-capabilities bb-play}"
+    if ! ninja -C out/gpu "${gpu_targets[@]}" > out/gpu-build.log 2>&1; then
         grep -v '^\[' out/gpu-build.log | tail -40 >&2
         echo 'Build failed (full log: out/gpu-build.log)' >&2; exit 1
     fi
-    cp out/gpu/bb-probe.exe out/gpu/bb-gpu-capabilities.exe out/gpu/bb-fg401-capabilities.exe out/gpu/bb-play.exe out/
+    for target in "${gpu_targets[@]}"; do cp "out/gpu/$target.exe" out/; done
     echo "Built $PWD/out/bb-probe.exe"
     exit 0
     ;;

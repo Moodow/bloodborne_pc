@@ -75,8 +75,12 @@ jobs:
         shell: msys2 {0}
         run: |
           git config --global core.autocrlf false
+          export BB_GPU_TARGETS=bb-probe
           sed -i 's|ninja -C out/gpu|ninja -j2 -C out/gpu|' build.sh
           grep -n "ninja -j2" build.sh
+          # 进程若被 OOM / 磁盘耗尽杀掉，后面的 trap 和 if 都不会执行，只能靠后台采样留证据。
+          ( while true; do date; df -h . | tail -1; head -3 /proc/meminfo; sleep 15; done ) > monitor.log 2>&1 &
+          MON=$!
           cmake -S gpu -B out/gpu -G Ninja \
             -DCMAKE_BUILD_TYPE=RelWithDebInfo \
             -DCMAKE_C_COMPILER_LAUNCHER=ccache \
@@ -85,10 +89,12 @@ jobs:
             -DCMAKE_C_FLAGS_RELWITHDEBINFO="-O2 -g0" > /dev/null
           bash -x build.sh > build-trace.txt 2>&1
           rc=$?
+          kill $MON 2>/dev/null || true
           if [ "$rc" -ne 0 ]; then
             echo "=== build.sh rc=$rc ==="
             echo "--- 磁盘 ---"; df -h . 2>/dev/null | tail -2
-            echo "--- 内存 ---"; cat /proc/meminfo 2>/dev/null | head -3 || true
+            echo "--- 内存 ---"; head -3 /proc/meminfo 2>/dev/null || true
+            echo "--- 监控尾部 ---"; tail -12 monitor.log 2>/dev/null || true
             echo "--- trace 尾部 ---"; tail -25 build-trace.txt
             echo "--- gpu-build.log 尾部 ---"; tail -25 out/gpu-build.log 2>/dev/null || true
             echo "--- 产物 ---"; ls -l out/gpu/*.exe 2>/dev/null || true
@@ -107,6 +113,7 @@ jobs:
           path: |
             build-trace.txt
             out/gpu-build.log
+            monitor.log
           if-no-files-found: ignore
 
       - uses: actions/upload-artifact@v4
