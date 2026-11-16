@@ -1,199 +1,156 @@
-# Bloodborne for Windows
-<a href="https://trendshift.io/repositories/306163?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-306163" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/306163/daily?language=C%2B%2B" alt="Supermedo%2Funcharted_pc | Trendshift" width="250" height="55"/></a>
+# Bloodborne for Windows（个人构建）
 
-**Bloodborne running natively on Windows 10 and 11, by [Supermedo](https://github.com/Supermedo) Mohammed Albarghouthi.**
+[English](README.en.md) · [上游项目](https://github.com/Supermedo/bloodborne_pc) · [下载](../../releases)
 
-The original PlayStation 4 game runs directly on your PC: its own x86-64 code runs natively,
-and the graphics are translated to Vulkan. No emulator window, no setup scripts: unpack the zip,
-start `Bloodborne.exe`, pick your game folder and press **PLAY**.
+> **本仓库是 [Supermedo/bloodborne_pc](https://github.com/Supermedo/bloodborne_pc) 的个人 fork**，
+> 由个人维护，不是官方发行版。其中部分改动针对特定场景，未必适用于所有人。
 
-**[Download the latest version](https://github.com/Supermedo/bloodborne_pc/releases/latest)** · **[Join the Discord](https://discord.gg/HXBaehzTBx)**  **[Join X,com](https://x.com/SuperMedoPorts)**
-Check my other ports 
-https://nativeretro.com/
+## 源项目
 
-> **No game files are included.** You need your own decrypted dump of Bloodborne, any retail
-> edition (US CUSA00900, EU CUSA00207, the Game of the Year editions such as CUSA03173, ...),
-> as SELF or plain ELF files. Version 1.09 is needed for the community patches (60/90/unlocked
-> FPS, resolution, effects); other versions run at 30 FPS.
-> This project is not affiliated with Sony Interactive Entertainment or FromSoftware.
+Bloodborne 原生运行在 Windows 10 / 11 上。PS4 原版游戏的 x86-64 代码直接在本机执行，图形翻译为
+Vulkan 呈现——不是模拟器，没有模拟器窗口，也不需要配置脚本：解压、启动 `Bloodborne.exe`、选择游戏
+目录、按下 **PLAY**。
 
-## Features
+项目由 [Supermedo](https://github.com/Supermedo)（Mohammed Albarghouthi）开发，构建在
+[bbport](https://github.com/deadinside28/bloodborne_pc)（deadinside28 的 Bloodborne Linux 原生移植）
+与 [shadPS4](https://github.com/shadps4-emu/shadPS4) 渲染器之上。
 
-- **Online play (beta):** messages, bloodstains and wandering ghosts from other hunters through
-  [SuperMedo Server](https://bbport.de/server/), and bells and summons through a shadNet
-  server (SupermMedos's public one by default).
-- **Launcher with every setting in one window**, in 13 languages: English, Arabic, Russian,
-  Spanish, Portuguese, French, German, Italian, Polish, Turkish, Chinese, Japanese, Korean.
-- **Guided first start:** five steps check your game files (a clean 1.09 `eboot.bin`, a complete
-  folder) and your PC before the first start, set the picture for your hardware and your goal,
-  set up keyboard or controller, bring your character along and sign you in for online play.
-- **Simple or expert view:** the simple view shows the pages a player needs and sets everything
-  technical by itself; the expert view adds every option. A switch at the bottom of the side bar.
-- **Your goal instead of graphics jargon:** Smooth (up to 120 FPS), Balanced (60 FPS, the best
-  picture) or Quiet (60 FPS, less work for the card); the settings for it come from your
-  hardware, rated like the hardware check on [bbport.de](https://bbport.de/install/), each with
-  its reason, and "Measure on this PC" checks them in the game.
-- **Search** (Ctrl+F): settings and help by your own words ("stutters", "black screen",
-  "controller").
-- **Saves from other versions:** characters from shadPS4, Awaken's port or a PS4 export
-  are found and imported (your own saves are backed up first).
-- **Help page:** checks your installation (a clean 1.09 `eboot.bin`, a complete game folder, the
-  page file, the port's location) and shows the fix for each problem step by step; after a
-  crash the launcher names the cause from the log. "Save a report" makes a zip for the Discord.
-- **Game tests:** the launcher plays a fixed scene by itself and measures it, to find the best
-  settings for 60, 90 or 120 FPS, to compare one setting with screenshots side by side, or to
-  test a beta for crashes over hours; the report has every chart and the logs.
-- **Updates from the launcher:** when a new version is out it tells you, and **Update**
-  installs it. Your saves, settings and mods are kept.
-- **NVIDIA DLSS** on GeForce RTX cards (RTX 20 series and newer).
-- **AMD FSR 3.1 and FSR 4** upscaling, plus native-resolution TAA.
-- **Windows AMD ML-FG 4.0.1** on supported RX 9000 GPUs, alongside FSR 3.1 frame
-  generation. [Requirements, implementation and measurements](docs/ML_FRAME_GENERATION_WINDOWS.md).
-- **Unlocked frame rate** with a frame cap (up to 120 by default), or 30/60/90 FPS.
-- **Output resolutions** from 720p to 4K, presets from Native AA to Ultra Performance.
-- **Cheats page:** never die, stealth, silent footsteps, Rally that never fades, enemy control,
-  and gameplay tweaks (camera distance, no camera auto-rotation, easier running, ragdoll
-  physics, the Japanese/Asian button layout with Circle to confirm and Cross to dodge).
-- **Game effects** on and off: chromatic aberration, depth of field, motion blur, SSAO, the
-  game's own AA, dynamic light shadows, screen-space reflections, model detail.
-- **Field of view** from 30 to 90 degrees (the game has 43), for every camera of the game.
-- **Mute in the background:** optionally silent while the game window is not in focus; the
-  mouse is released then too.
-- **Mods and third-party patches**, loaded without changing your game files.
-- **DLC** from your own dump (The Old Hunters on base-game dumps), with a DLC folder setting.
-- **Add to Steam** puts the game in your Steam library in one click.
-- **`Play Bloodborne.exe`** starts the game straight away with your saved settings (good for a
-  desktop shortcut).
-- **Controller and keyboard**, an in-game settings menu (Insert or L3+R3), name entry on
-  screen, a desktop shortcut, and a button to clear the shader cache.
-- **Keyboard and mouse:** remap keys and buttons on the Controls page (up to three per action), key combinations such as
-  Shift + left click, a Dark Souls III layout, mouse look, and a direct 1:1 mouse camera
-  ([docs/INPUT.md](docs/INPUT.md)).
-- **Text and voice language** chosen separately, Brazilian Portuguese text included.
-- **Achievements page** in the launcher with the trophies you have earned, updated live.
+**不含任何游戏文件。** 需要自备解密后的游戏转储（任意零售版本：美版 CUSA00900、欧版 CUSA00207、
+年度版 CUSA03173 等），格式为 SELF 或纯 ELF。社区补丁（60/90/解锁帧率、分辨率、特效）需要
+**1.09** 版本，其他版本以 30 FPS 运行。
 
-## Requirements
+本项目与 Sony Interactive Entertainment 及 FromSoftware 无隶属关系。
 
-- Windows 10 (1903 or later) or Windows 11, 64-bit
-- An Intel Core 4th generation (Haswell, 2013) or newer, or an AMD Ryzen: the game uses
-  instructions of the PS4's processor (AVX, BMI1, MOVBE, LZCNT). Intel 2nd and 3rd generation
-  (Sandy and Ivy Bridge) run with translated instructions, best effort; processors without AVX
-  (many Pentium and Celeron models) cannot run it
-- A graphics card with Vulkan 1.3 and a current driver
-- About 6 GB of free memory (RAM + page file), 10 GB for 1440p or 4K output
-- DLSS: NVIDIA GeForce RTX 20 series or newer
+上游的完整功能说明见 [Supermedo/bloodborne_pc 的 README](https://github.com/Supermedo/bloodborne_pc#features)，
+包括 13 语言启动器、DLSS / FSR 3.1 / FSR 4、ML 帧生成、作弊页、画质与视场角调节、键鼠映射、
+存档导入、游戏内测试与更新器等。
 
-Nothing else to install: everything the game needs is in the zip.
+## 这个 fork 做了什么
 
-## How to play
+### 1. 修复中文补丁导致的联机失效
 
-1. Download the zip from [Releases](https://github.com/Supermedo/bloodborne_pc/releases/latest)
-   and unpack it anywhere.
-2. Start `Bloodborne.exe`. The first time, a short guide checks your game folder (the one
-   with `eboot.bin`) and your PC, and sets the picture for your hardware.
-3. Press **PLAY**.
+零售版的血源要显示中文，只能通过 **Unlock Game Region** 补丁。该补丁把游戏 region 改为 5，超出
+游戏内四条目服务器 URL 表的索引范围，取到空字符串。随后 `sceHttpCreateConnectionWithURL` 收到空
+URL，连接被拒，游戏提示「无法获取 Bloodborne 服务器信息」，联机永远无法启动。
 
-**DLC.** The Game of the Year editions (CUSA03179 US, CUSA03173 EU, CUSA03014 JP, CUSA03023
-Asia) already have The Old Hunters. With a base-game dump (US CUSA00900, EU CUSA00207, ...),
-also dump your add-ons: each is a folder named like `SPEXPANSIONDLC03` with only
-`sce_sys` inside, since their data ships with the 1.09 update. Put them in one folder and choose
-it as **DLC folder** on **Game files** (expert view), or copy them to `user\addcont\<title id>\` (the
-layout shadPS4 and bbport use).
+服务器上每个 `/bb-xx/` 路径返回同一份文档，因此当 URL 不带 scheme 时，回退到游戏自身 host 的 EU
+端点（`https://ss4.scej-network.jp:20443/bb-eu/ss.info`）。`run.py` 写入的 host 覆盖仍会把它重定向到
+社区服务器，自定义服务器不受影响。
 
-In the game, **Insert** (or **L3+R3** on a controller) opens the settings menu. The game's own
-**System** menu also has **PC Graphics**, **PC Effects** and **PC Options**: the main settings on
-the game's settings screen (bbport.ini `pc_menu=0` removes them).
-Keyboard: WASD move, arrows camera, Space Cross, Left Shift Circle, E Square, V Triangle,
-1/3 L1/R1, R/F L2/R2, Z L3, Q/C R3 (lock-on), I/K/J/L d-pad, Enter Options, Tab / Backspace
-left / right touchpad half. Xbox controllers: Back + d-pad left / right clicks the left / right
-touchpad half (gestures / key items), Back alone the left half.
-The keyboard now works together with a connected controller instead of only without one.
-All of this is configurable in `input.ini` (shadPS4's input config syntax: a Bloodborne file
-made for shadPS4 can be copied over it), including mouse look: see [docs/INPUT.md](docs/INPUT.md).
+可用 `BB_SERVER_INFO_URL` 指定其他地址，设为 `0` 则关闭该回退。
 
-## Playing online (beta)
+一句话：**用中文补丁也能联机。**
 
-1. Register a shadNet account at [shadnet.shadps4.net](https://shadnet.shadps4.net).
-2. In the launcher, open **Online play**, tick **Play online** and enter your account name
-   (not your email) and password.
-3. Press **Test connection**: all three lines should say "reachable". Then press **PLAY** and
-   choose online at the title screen.
+### 2. 构建与发布流水线
 
-Everyone you want to play with needs game version 1.09 and the same co-op server. A private
-shadNet server (from the [shadp2p](https://github.com/Wozzardman/shadp2p) project) works too:
-put its address in **Server address**.
+上游的 CI 在本仓库环境中无法跑通（`msys2-env.sh` 会把 runner 预装的旧版 MSYS2 注入 PATH，导致
+`cp` 等 coreutils exec 失败并返回 127）。本 fork 重建了这条流水线：
 
-For help with online play, use our [Discord server](https://discord.gg/WtYT4fXhEN).
+- push 时只编 `bb-probe.exe` 做快速编译验证，约 5 分钟
+- 打 `windows-v*` 标签时全量构建并自动发布两个包
+- 并行度按实际核数、ccache 复用、失败时导出可诊断的日志
 
-## Known issues
+这两类改动是本仓库与上游的全部差异。功能层面的一切都来自上游，本仓库没有新增游戏特性。
 
-- Some AMD graphics cards may still crash when the game world loads; please send
-  `user\last_run.log` if yours does.
-- Online play is new. Messages, bloodstains, ghosts and summons with the bells work on the
-  default server; please report how it goes on Discord.
-- Keep the frame cap at 120 or lower. The sprint that stayed at half speed above 90 FPS is
-  fixed, but the game's own timing above 120 FPS has not been checked everywhere.
-- Intel 2nd and 3rd generation processors run with translated instructions (best effort):
-  a few rarely used ones are not translated yet.
+## 下载
 
-## Problems and feedback
+到 [Releases](../../releases) 挑选：
 
-Ask in [Help & Support](https://forum.bbport.de/t/help-support) on the community forum or on the
-[Discord server](https://discord.gg/WtYT4fXhEN), or open an [issue](https://github.com/Supermedo/bloodborne_pc/issues) and attach
-`user\last_run.log` from the game folder, with your graphics card and what happened.
-If the game shows only a black screen, try **Advanced → Clear shader cache** first.
-Crashes on AMD RDNA2 cards, slow FSR 4 and online errors are collected in
-[docs/WINDOWS_TROUBLESHOOTING.md](docs/WINDOWS_TROUBLESHOOTING.md).
+| 文件 | 说明 |
+| --- | --- |
+| `bbport-windows.zip` | **完整包**，与上游发行版同构：含启动器、四个可执行文件、FSR 各版本运行库与许可文件。解压即用。 |
+| `bb-probe-only.zip` | **精简包**，仅主程序 `bb-probe.exe`，依赖已静态链接。需要自行准备游戏目录与启动方式，没有图形启动器。 |
 
-## Building from source
+## 系统要求
 
-See [packaging/windows/README.md](packaging/windows/README.md): MSYS2 CLANG64, `bash build.sh`,
-then `bash packaging/windows/package.sh`. DLSS is built separately with
-`packaging/windows/build_dlss.sh` (needs Visual Studio 2022).
+- Windows 10（1903 或更高）或 Windows 11，64 位
+- Intel 第 4 代（Haswell，2013）及以上的 Core，或 AMD Ryzen。游戏使用了 PS4 处理器的指令集
+  （AVX、BMI1、MOVBE、LZCNT）；Intel 第 2、3 代可借助指令翻译运行（尽力而为）；不支持 AVX 的
+  处理器（多数 Pentium、Celeron）无法运行
+- 支持 Vulkan 1.3 的显卡与较新的驱动
+- 约 6 GB 可用内存（物理内存 + 页面文件），1440p 或 4K 输出需要 10 GB
+- DLSS 需要 NVIDIA GeForce RTX 20 系及以上
 
-## Credits
+完整包无需另装任何东西，游戏需要的一切都在压缩包里。
 
-Built on [bbport](https://github.com/deadinside28/bloodborne_pc), the native Linux port of
-Bloodborne by deadinside28, and on the [shadPS4](https://github.com/shadps4-emu/shadPS4)
-renderer. The original README is in [docs/original-readme](docs/original-readme/README.md).
+## 开始游戏
 
-Online play uses the network, NP and shadNet code of [shadPS4](https://github.com/shadps4-emu/shadPS4)
-0.20 and the shadNet server of the [shadPS4](https://shadps4.net) team, put together for this port
-by **Awaken** ([BloodBorneButPc](https://github.com/Awakenchan/BloodBorneButPc)), whose online code
-bbport now uses (see [gpu/bbnet/SHADNET-PORT.md](gpu/bbnet/SHADNET-PORT.md)). Thanks to Wozzardman's
-[shadp2p](https://github.com/Wozzardman/shadp2p), which bbport's first online version was built on.
+1. 从 [Releases](../../releases) 下载并解压到任意目录
+2. 启动 `Bloodborne.exe`。首次运行会引导检查游戏目录（含 `eboot.bin` 的那个）与硬件，并按硬件设定画质
+3. 按下 **PLAY**
 
-Seamless co-op is **BBSC: Yharnam Together** by **CLSAMG22** ([CLSAMG22/BBSC](https://github.com/CLSAMG22/BBSC),
-GPL-2.0): this port runs BBSC's game files, co-op event patcher and HUD with its own engine
-(`bin\bb-probe-seamless.exe`) and launcher. This port's change to BBSC's files is listed in the
-package's `seamless\bbport-seamless.txt`.
+游戏内按 **Insert**（手柄 **L3+R3**）打开设置菜单。
 
-The low-VRAM profile for 4 GB graphics cards comes from the 4 GB mod by **fixdag** and
-**bashiku**.
+**DLC**：年度版已含《老猎人》。基础版转储需另外导出附加内容——每个附加内容是一个形如
+`SPEXPANSIONDLC03` 的文件夹，内部只有 `sce_sys`。把它们放进同一目录，在**游戏文件**页选择该目录
+作为 **DLC 文件夹**，或复制到 `user\addcont\<title id>\`。
 
-Also used: [FSR-Vulkan](https://github.com/FireBurn/FSR-Vulkan) and the AMD FidelityFX SDK
-(FSR), FSR 4 assets from [FireBurn/Q2RTX](https://github.com/FireBurn/Q2RTX), the DLSS bridge
-adapted from [IFreemz/shadPS4-Bloodborne-DLSS-FSR](https://github.com/IFreemz/shadPS4-Bloodborne-DLSS-FSR),
-the [NVIDIA DLSS SDK](https://github.com/NVIDIA/DLSS) (`nvngx_dlss.dll` under NVIDIA's license),
-[LibAtrac9](https://github.com/Thealexbarney/LibAtrac9), [SDL3](https://github.com/libsdl-org/SDL),
-[FFmpeg](https://ffmpeg.org), [Dear ImGui](https://github.com/ocornut/imgui),
-[sirit](https://github.com/shadps4-emu/sirit), [magic_enum](https://github.com/Neargye/magic_enum),
-[miniz](https://github.com/richgel999/miniz), [xbyak](https://github.com/herumi/xbyak),
-[wepoll](https://github.com/piscisaureus/wepoll), [cpp-httplib](https://github.com/yhirose/cpp-httplib),
-[Protocol Buffers](https://protobuf.dev), [OpenSSL](https://www.openssl.org),
-[miniupnpc](https://miniupnp.tuxfamily.org), [JSON for Modern C++](https://github.com/nlohmann/json),
-[Vulkan Memory Allocator](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator),
-[MSYS2](https://www.msys2.org) / [LLVM](https://llvm.org), [PyInstaller](https://pyinstaller.org)
-and [Pillow](https://python-pillow.org). Game patches by Kyo, Lance McDonald, auser1337,
-illusion, emoose and the Bloodborne community.
+**联机**：在启动器**联机**页勾选、填入 shadNet 账号，先按**测试连接**确认三行均可达，再进游戏。
+所有参与者需使用 1.09 版本与同一联机服务器。使用中文补丁时，联机依赖上文所述的 URL 回退修复。
 
-NVIDIA, GeForce RTX and DLSS are trademarks of NVIDIA Corporation. The icon is original
-artwork.
+## 已知问题
 
-## License
+- 部分 AMD 显卡在游戏世界加载时仍可能崩溃，可提交 `user\last_run.log`
+- 联机功能较新，默认服务器上的留言、血迹、幻影与召唤已可用
+- 建议帧率上限保持在 120 及以下
+- Intel 第 2、3 代处理器依赖指令翻译，少数指令尚未覆盖
 
-The port's own code is GNU GPL v2 or later ([LICENSE](LICENSE)). Some parts are GPL v3 or later:
-the FSR 4.1 launcher files (`launcher/bbport_fsr41*.py`, `launcher/bbport_fsr412.py`,
-`launcher/bbport_driver_runtime.py`). The program built from them together is therefore distributed
-under the GNU GPL v3 or later (`licenses\GPL-3.0.txt` in the download). Third-party components keep their own
-licenses (see `licenses\` in the download).
+更多排查方法见上游的 [docs/WINDOWS_TROUBLESHOOTING.md](docs/WINDOWS_TROUBLESHOOTING.md)。
+若只有黑屏，先试**高级 → 清除着色器缓存**。
+
+## 从源码构建
+
+需要 MSYS2 CLANG64 环境：
+
+```bash
+bash build.sh                              # 生成 out/gpu/ 下的可执行文件
+bash packaging/windows/package.sh          # 生成 dist/bbport-windows.zip 完整包
+```
+
+完整说明见 [packaging/windows/README.md](packaging/windows/README.md)。DLSS 需单独用
+`packaging/windows/build_dlss.sh` 构建（依赖 Visual Studio 2022）。
+
+本仓库的发布流程：`bash packaging/windows/package.sh --zip-only` 只产出 zip，不刷新 `dist/` 下的可玩
+副本，适合 CI。打标签后由 `.github/workflows/release.yml` 自动完成构建与发布。
+
+## 致谢
+
+建立在 [bbport](https://github.com/deadinside28/bloodborne_pc)（deadinside28 的 Bloodborne Linux
+原生移植）与 [shadPS4](https://github.com/shadps4-emu/shadPS4) 渲染器之上。原始 README 见
+[docs/original-readme](docs/original-readme/README.md)。
+
+联机功能使用 [shadPS4](https://github.com/shadps4-emu/shadPS4) 0.20 的网络、NP 与 shadNet 代码，
+以及 [shadPS4](https://shadps4.net) 团队的 shadNet 服务器，由 **Awaken**
+（[BloodBorneButPc](https://github.com/Awakenchan/BloodBorneButPc)）为本移植整合。感谢 Wozzardman 的
+[shadp2p](https://github.com/Wozzardman/shadp2p)，bbport 的首个联机版本建立在其之上。
+
+无缝联机为 **CLSAMG22** 的 **BBSC: Yharnam Together**（[CLSAMG22/BBSC](https://github.com/CLSAMG22/BBSC)，
+GPL-2.0）：本移植以其自有引擎运行 BBSC 的游戏文件、联机事件补丁与 HUD。本移植对 BBSC 文件的改动列在
+发布包的 `seamless\bbport-seamless.txt` 中。
+
+4 GB 显卡的低显存配置文件来自 **fixdag** 与 **bashiku** 的 4 GB 模组。
+
+其他组件：[FSR-Vulkan](https://github.com/FireBurn/FSR-Vulkan) 与 AMD FidelityFX SDK（FSR），FSR 4
+资源来自 [FireBurn/Q2RTX](https://github.com/FireBurn/Q2RTX)，DLSS 桥接改编自
+[IFreemz/shadPS4-Bloodborne-DLSS-FSR](https://github.com/IFreemz/shadPS4-Bloodborne-DLSS-FSR)，
+[NVIDIA DLSS SDK](https://github.com/NVIDIA/DLSS)、[LibAtrac9](https://github.com/Thealexbarney/LibAtrac9)、
+[SDL3](https://github.com/libsdl-org/SDL)、[FFmpeg](https://ffmpeg.org)、
+[Dear ImGui](https://github.com/ocornut/imgui)、[sirit](https://github.com/shadps4-emu/sirit)、
+[magic_enum](https://github.com/Neargye/magic_enum)、[miniz](https://github.com/richgel999/miniz)、
+[xbyak](https://github.com/herumi/xbyak)、[wepoll](https://github.com/piscisaureus/wepoll)、
+[cpp-httplib](https://github.com/yhirose/cpp-httplib)、[Protocol Buffers](https://protobuf.dev)、
+[OpenSSL](https://www.openssl.org)、[miniupnpc](https://miniupnp.tuxfamily.org)、
+[JSON for Modern C++](https://github.com/nlohmann/json)、
+[Vulkan Memory Allocator](https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator)、
+[MSYS2](https://www.msys2.org) / [LLVM](https://llvm.org)、[PyInstaller](https://pyinstaller.org)、
+[Pillow](https://python-pillow.org)。游戏补丁来自 Kyo、Lance McDonald、auser1337、illusion、emoose
+以及血源社区。
+
+NVIDIA、GeForce RTX 与 DLSS 是 NVIDIA Corporation 的商标。图标为原创作品。
+
+## 许可
+
+本移植自有代码采用 GNU GPL v2 或更高版本（[LICENSE](LICENSE)）。部分代码为 GPL v3 或更高版本：
+FSR 4.1 启动器文件（`launcher/bbport_fsr41*.py`、`launcher/bbport_fsr412.py`、
+`launcher/bbport_driver_runtime.py`）。由它们共同构建的完整程序因此以 GNU GPL v3 或更高版本分发
+（发布包内 `licenses\GPL-3.0.txt`）。第三方组件保持各自的许可（见发布包内 `licenses\`）。

@@ -123,7 +123,7 @@ cp out/fsr24/amd_fidelityfx_framegeneration_dx12.dll "$dest/bin/fsr24/"
 out/pyenv/Scripts/python.exe packaging/windows/prepare_fsr4vk.py --stage "$dest/fsr4vk"
 # Legacy CPU (Intel 3rd generation and older): the translation plan scripts/cpu_compat.py applies.
 mkdir -p "$dest/tools" && cp tools/legacy-cpu-plan.json "$dest/tools/"
-cp run.py LICENSE README.md packaging/windows/README-Windows.txt "$dest/"
+cp run.py LICENSE README.md README.en.md packaging/windows/README-Windows.txt "$dest/"
 # Offline Chalice Glyphs (docs/LOCAL_CHALICE.md): the glyph catalog beside bb-probe.exe.
 mkdir -p "$dest/bin/LocalChalice"
 cp data/local_chalice/catalog.bin "$dest/bin/LocalChalice/"

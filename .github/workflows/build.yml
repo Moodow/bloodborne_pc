@@ -1,8 +1,11 @@
 name: build-windows
 
-# GitHub 的 windows-latest 只有 2 核 7 GB，默认并行度会在链接阶段把内存打穿
-# （表现为 ninja 中途被杀、无报错、退出码 127）。这里把 build.sh 里的 ninja 固定成 -j2，
-# 并用 -g0 去掉调试信息降低单 TU 内存占用。
+# windows-latest 实测 4 vCPU / 16 GB：并行度用 nproc 自适应，不写死 -j2。
+# 用 -g0 去掉调试信息，降低单 TU 的内存占用与产物体积。
+#
+# CI 上 C://msys64 是镜像预装的旧版 MSYS2，build.sh 会 source msys2-env.sh 把它的 usr/bin
+# 插到 PATH 最前，导致 cp 等 coreutils exec 失败并返回 127。这里用 MSYS2_ROOT 指向不存在的
+# 路径让它跳过注入；setup-msys2 的工具链本来就在 PATH 里。
 #
 # 注意：不要用 shell 包装脚本替代 ninja —— CMake 会直接执行 `ninja --version` 探测编译器，
 # 包装脚本会报 "inappropriate file type or format"。
@@ -11,7 +14,16 @@ on:
   push:
     branches:
       - 'ci/**'
+    # 纯文档改动不必占用一次完整构建
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
   workflow_dispatch:
+
+# 同一分支连推多次时取消上一轮，避免排队跑没人看的结果
+concurrency:
+  group: build-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -38,7 +50,7 @@ jobs:
         uses: hendrikmuhs/ccache-action@v1.2
         with:
           key: bbport-${{ hashFiles('gpu/CMakeLists.txt', 'gpu/bbnet/**', 'patches/**') }}
-          max-size: 2G
+          max-size: 3G
 
       - uses: msys2/setup-msys2@v2
         with:

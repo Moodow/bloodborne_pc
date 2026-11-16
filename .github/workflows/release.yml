@@ -17,6 +17,11 @@ on:
 permissions:
   contents: write
 
+# 同一个 tag 被重复推送时不并行跑两份 PyInstaller
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     runs-on: windows-latest
