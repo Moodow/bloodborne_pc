@@ -55,9 +55,11 @@ jobs:
       - uses: msys2/setup-msys2@v2
         with:
           msystem: CLANG64
-          # 不再每次 pacman -Syu 全量更新（约 90s）；依赖由下面 install 精确安装。
+          # 保留全量更新：去掉后实测 156s，反而比保留时的 109s 更慢（缓存 key 会变，
+          # 且 base 与包版本可能错配——症状就是本次耗时排查的 cp/exec 返回 127）。
+          update: true
           install: >-
-            git patch zip unzip python
+            git patch zip unzip python ccache
             mingw-w64-clang-x86_64-toolchain
             mingw-w64-clang-x86_64-cmake
             mingw-w64-clang-x86_64-ninja
@@ -93,10 +95,11 @@ jobs:
           # 二进制，与当前 bash 已映射的新版 msys-2.0.dll 不符，exec 失败后 bash 报 127。
           # 指向不存在的路径让脚本自行跳过 PATH 注入——setup-msys2 的工具链本来就在 PATH 里。
           export MSYS2_ROOT=/nonexistent-msys2
-          # windows-latest 现在是 4 vCPU / 16 GB，写死 -j2 只用了一半核心。
-          sed -i 's|ninja -C out/gpu|ninja -j"$(nproc)" -C out/gpu|' build.sh
+          # 实测 -j2 编译 378s，-j4 反而 573s（4 vCPU 是 2 物理核 + 超线程，编译密集型
+          # 负载下超线程争抢严重）。保持 -j2。
+          sed -i 's|ninja -C out/gpu|ninja -j2 -C out/gpu|' build.sh
           grep -n "ninja -j" build.sh
-          echo "可用核心: $(nproc)"
+          echo "可用核心: $(nproc)"; ccache --version 2>&1 | head -1 || echo "ccache 不可用"
           # 进程若被 OOM / 磁盘耗尽杀掉，后面的 trap 和 if 都不会执行，只能靠后台采样留证据。
           ( while true; do date; df -h . | tail -1; head -3 /proc/meminfo; sleep 15; done ) > monitor.log 2>&1 &
           MON=$!
