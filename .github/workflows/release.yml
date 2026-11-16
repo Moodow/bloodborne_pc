@@ -43,6 +43,27 @@ jobs:
           sed -i 's/\r$//' gpu/patches/fsr-vulkan/*.patch
           find gpu/third_party/fsr-vulkan -type f \( -name '*.c' -o -name '*.h' \) -exec sed -i 's/\r$//' {} +
 
+      # 启动器靠 VERSION + FORK_REV 判断自己是哪一版、要不要更新（launcher/bbport_launcher_win.py:
+      # latest_release / own_version）。两者与标签不符时，要么每次启动都提示「有新版本」却装不上，
+      # 要么新版本永远不会被提示。这里在编译前就断掉，比 4 小时后在发布页发现好。
+      - name: 标签必须与 VERSION / FORK_REV 一致
+        shell: bash
+        run: |
+          tag="${{ github.event.inputs.tag || github.ref_name }}"
+          case "$tag" in
+            windows-v*-moodow.*) ;;
+            *) echo "标签不是 windows-v<上游版本>-moodow.<序号> 形式：$tag" >&2; exit 1 ;;
+          esac
+          want_version="${tag#windows-v}"; want_version="${want_version%-moodow.*}"
+          want_rev="${tag##*-moodow.}"
+          have_version=$(sed -n "s/^VERSION = '\(.*\)'\$/\1/p" launcher/bbport_launcher_win.py)
+          have_rev=$(sed -n "s/^FORK_REV = \([0-9]*\)\$/\1/p" launcher/bbport_fork.py)
+          echo "标签 $tag → VERSION=$want_version FORK_REV=$want_rev"
+          echo "源码        → VERSION=$have_version FORK_REV=$have_rev"
+          [ "$want_version" = "$have_version" ] || { echo "VERSION 与标签不符（上游同步后忘了改？）" >&2; exit 1; }
+          [ -n "$have_rev" ] || { echo "launcher/bbport_fork.py 里读不到 FORK_REV" >&2; exit 1; }
+          [ "$want_rev" = "$have_rev" ] || { echo "FORK_REV 与标签不符（改了源码忘了递增？）" >&2; exit 1; }
+
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2
         with:

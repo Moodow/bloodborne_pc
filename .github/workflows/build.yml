@@ -49,6 +49,24 @@ jobs:
           sed -i 's/\r$//' gpu/patches/fsr-vulkan/*.patch
           find gpu/third_party/fsr-vulkan -type f \( -name '*.c' -o -name '*.h' \) -exec sed -i 's/\r$//' {} +
 
+      # 合并上游时最容易出的错，是冲突解决成上游那一侧：更新通道悄悄退回官方仓库。本仓库的改动全部住在
+      # launcher/bbport_fork.py（merge 不会碰它），但调用点仍在 bbport_launcher_win.py，所以这里一秒内
+      # 把回退挡掉，而不是等到玩家点了「更新」装回官方版才发现。
+      - name: 更新通道仍指向本仓库
+        shell: bash
+        run: |
+          test -f launcher/bbport_fork.py || { echo "launcher/bbport_fork.py 丢了" >&2; exit 1; }
+          grep -q "REPOSITORY = 'Moodow/bloodborne_pc'" launcher/bbport_fork.py \
+            || { echo "bbport_fork.REPOSITORY 不再指向本仓库" >&2; exit 1; }
+          grep -Eq '^FORK_REV = [1-9][0-9]*$' launcher/bbport_fork.py \
+            || { echo "FORK_REV 丢了、被改成 0，或不再是纯数字" >&2; exit 1; }
+          grep -q "import bbport_fork as forked" launcher/bbport_launcher_win.py \
+            || { echo "启动器不再引用 bbport_fork" >&2; exit 1; }
+          if grep -q "Supermedo/bloodborne_pc" launcher/bbport_launcher_win.py; then
+            echo "更新通道退回上游：launcher/bbport_launcher_win.py 里还有 Supermedo/bloodborne_pc" >&2
+            exit 1
+          fi
+
       - uses: msys2/setup-msys2@v2
         with:
           msystem: CLANG64
