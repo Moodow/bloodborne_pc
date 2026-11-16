@@ -20,16 +20,8 @@ MINGW*|MSYS*)
             git -C gpu/third_party/fsr-vulkan apply "$PWD/$patch"
         fi
     done
-    # ccache：只在本机装了 ccache 时启用（CI 由 ccache-action 提供）。放在这里而不是
-    # 只写在 CI 的 cmake 调用里，是因为本脚本会再跑一次 cmake 覆盖配置，之前正是这样
-    # 让 ccache 从未真正被调用过（缓存大小始终为 0）。
-    ccache_args=()
-    if command -v ccache >/dev/null 2>&1; then
-        ccache_args=(-DCMAKE_C_COMPILER_LAUNCHER=ccache -DCMAKE_CXX_COMPILER_LAUNCHER=ccache)
-    fi
     cmake -S gpu -B out/gpu -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo -DBB_PGO=off \
-        -DBB_LTO="${BB_LTO:-OFF}" -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ \
-        "${ccache_args[@]}" >/dev/null
+        -DBB_LTO="${BB_LTO:-OFF}" -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ >/dev/null
     echo "GPU library and loader: LTO ${BB_LTO:-OFF}"
     # CI 只需要 bb-probe：Windows 上 bbgpu 是 STATIC，其余三个工具会各自再静态链接
     # 一份完整副本，额外吃掉数 GB 磁盘与链接内存。
