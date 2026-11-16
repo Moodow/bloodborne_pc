@@ -1,0 +1,156 @@
+name: release-windows
+
+# 打 tag（windows-v*）时出双包：完整包复用官方 packaging/windows/package.sh --zip-only，
+# 产物与上游发行版同构；外加一个只含 bb-probe.exe 的精简包。
+# 日常 push 走 build.yml，只编 bb-probe 做快速编译验证。
+
+on:
+  push:
+    tags:
+      - 'windows-v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: '标签名，如 windows-v1.9.8.6-moodow.1'
+        required: true
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: windows-latest
+    timeout-minutes: 240
+    steps:
+      # 必须在 checkout 之前：否则子模块被 checkout 成 CRLF，而补丁是 LF，git apply 会失败
+      - name: 关闭 CRLF 转换
+        shell: bash
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: 归一化行尾
+        shell: bash
+        run: |
+          sed -i 's/\r$//' gpu/patches/fsr-vulkan/*.patch
+          find gpu/third_party/fsr-vulkan -type f \( -name '*.c' -o -name '*.h' \) -exec sed -i 's/\r$//' {} +
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: bbport-release-${{ hashFiles('gpu/CMakeLists.txt', 'gpu/bbnet/**', 'patches/**') }}
+          max-size: 2G
+
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: CLANG64
+          # 不再每次 pacman -Syu 全量更新（约 90s）；依赖由下面 install 精确安装。
+          install: >-
+            git patch zip unzip python
+            mingw-w64-clang-x86_64-toolchain
+            mingw-w64-clang-x86_64-cmake
+            mingw-w64-clang-x86_64-ninja
+            mingw-w64-clang-x86_64-pkgconf
+            mingw-w64-clang-x86_64-python
+            mingw-w64-clang-x86_64-vulkan-headers
+            mingw-w64-clang-x86_64-vulkan-loader
+            mingw-w64-clang-x86_64-vulkan-memory-allocator
+            mingw-w64-clang-x86_64-glslang
+            mingw-w64-clang-x86_64-sdl3
+            mingw-w64-clang-x86_64-fmt
+            mingw-w64-clang-x86_64-boost
+            mingw-w64-clang-x86_64-robin-map
+            mingw-w64-clang-x86_64-xxhash
+            mingw-w64-clang-x86_64-ffmpeg
+            mingw-w64-clang-x86_64-zydis
+            mingw-w64-clang-x86_64-spirv-tools
+            mingw-w64-clang-x86_64-spirv-headers
+            mingw-w64-clang-x86_64-spirv-cross
+            mingw-w64-clang-x86_64-protobuf
+            mingw-w64-clang-x86_64-openssl
+            mingw-w64-clang-x86_64-zlib
+            mingw-w64-clang-x86_64-miniupnpc
+            mingw-w64-clang-x86_64-nlohmann-json
+
+      # package.sh 用 PyInstaller 冻结 launcher，必须是 Windows 原生 Python 3.14
+      # （PYTHON_VERSION 写死在 package.sh 里，装了别的版本会被它拒绝）。
+      - name: Windows Python 3.14
+        id: py
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.14'
+
+      - name: 编译（4 个 exe 全编，package.sh 要求齐全）
+        shell: msys2 {0}
+        run: |
+          git config --global core.autocrlf false
+          # 绕开 runner 预装的旧版 MSYS2，否则 cp 等 coreutils 会 exec 失败（127）
+          export MSYS2_ROOT=/nonexistent-msys2
+          sed -i 's|ninja -C out/gpu|ninja -j"$(nproc)" -C out/gpu|' build.sh
+          echo "可用核心: $(nproc)"
+          bash -x build.sh 2>&1 | tee build-trace.txt
+          rc=${PIPESTATUS[0]}
+          if [ "$rc" -ne 0 ]; then
+            echo "=== build.sh rc=$rc ==="
+            tail -40 build-trace.txt
+            echo "--- gpu-build.log 尾部 ---"; tail -30 out/gpu-build.log 2>/dev/null || true
+          fi
+          exit $rc
+
+      - name: 打完整包
+        shell: msys2 {0}
+        env:
+          WINPYTHON: ${{ steps.py.outputs.python-path }}
+        run: |
+          export MSYS2_ROOT=/nonexistent-msys2 PYTHONUTF8=1
+          # setup-python 给的是 Windows 原生路径，转成 POSIX 才好从 MSYS2 调用
+          export WINPYTHON="$(cygpath -u "$WINPYTHON")"
+          echo "使用 Python: $WINPYTHON"
+          bash -x packaging/windows/package.sh --zip-only 2>&1 | tee package-trace.txt
+          rc=${PIPESTATUS[0]}
+          if [ "$rc" -ne 0 ]; then tail -60 package-trace.txt; fi
+          exit $rc
+
+      - name: 打精简包
+        shell: msys2 {0}
+        run: |
+          export MSYS2_ROOT=/nonexistent-msys2 PYTHONUTF8=1
+          python tools/collect-runtime.py --exe out/gpu/bb-probe.exe --out dist/bb-probe-only.zip
+
+      - name: 产物清单
+        shell: msys2 {0}
+        run: ls -lh dist/ 2>&1 || true
+
+      - name: 失败时导出日志
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-logs
+          path: |
+            build-trace.txt
+            package-trace.txt
+            out/gpu-build.log
+          if-no-files-found: ignore
+
+      - name: 发布 Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.event.inputs.tag || github.ref_name }}
+          name: Bloodborne PC ${{ github.event.inputs.tag || github.ref_name }}
+          body: |
+            基于上游 `Supermedo/bloodborne_pc` 的个人构建。
+
+            | 文件 | 说明 |
+            | --- | --- |
+            | `bbport-windows.zip` | 完整包，解压即用，含启动器 |
+            | `bb-probe-only.zip` | 精简包，仅主程序，依赖已静态链接 |
+            | `fsr4vk-*-src.zip` | 第三方对应源码（随完整包分发） |
+          files: |
+            dist/bbport-windows.zip
+            dist/fsr4vk-*-src.zip
+            dist/bb-probe-only.zip
+          fail_on_unmatched_files: false
+          generate_release_notes: true

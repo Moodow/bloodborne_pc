@@ -43,7 +43,7 @@ jobs:
       - uses: msys2/setup-msys2@v2
         with:
           msystem: CLANG64
-          update: true
+          # 不再每次 pacman -Syu 全量更新（约 90s）；依赖由下面 install 精确安装。
           install: >-
             git patch zip unzip python
             mingw-w64-clang-x86_64-toolchain
@@ -81,8 +81,10 @@ jobs:
           # 二进制，与当前 bash 已映射的新版 msys-2.0.dll 不符，exec 失败后 bash 报 127。
           # 指向不存在的路径让脚本自行跳过 PATH 注入——setup-msys2 的工具链本来就在 PATH 里。
           export MSYS2_ROOT=/nonexistent-msys2
-          sed -i 's|ninja -C out/gpu|ninja -j2 -C out/gpu|' build.sh
-          grep -n "ninja -j2" build.sh
+          # windows-latest 现在是 4 vCPU / 16 GB，写死 -j2 只用了一半核心。
+          sed -i 's|ninja -C out/gpu|ninja -j"$(nproc)" -C out/gpu|' build.sh
+          grep -n "ninja -j" build.sh
+          echo "可用核心: $(nproc)"
           # 进程若被 OOM / 磁盘耗尽杀掉，后面的 trap 和 if 都不会执行，只能靠后台采样留证据。
           ( while true; do date; df -h . | tail -1; head -3 /proc/meminfo; sleep 15; done ) > monitor.log 2>&1 &
           MON=$!
@@ -97,6 +99,7 @@ jobs:
           bash -x build.sh 2>&1 | tee build-trace.txt
           rc=${PIPESTATUS[0]}
           kill $MON 2>/dev/null || true
+          echo "=== ccache 统计 ==="; ccache -s 2>&1 | head -12 || true
           if [ "$rc" -ne 0 ]; then
             echo "=== build.sh rc=$rc ==="
             echo "--- 磁盘 ---"; df -h . 2>/dev/null | tail -2
