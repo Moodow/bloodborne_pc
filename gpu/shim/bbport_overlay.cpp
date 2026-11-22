@@ -886,9 +886,6 @@ void Menu() {
     ImGui::SameLine();
     Checkbox("Colour-coded values", s.counter_colors);
     Checkbox("Mute when the game is in the background", s.mute_unfocused);
-    Checkbox("Fill the game's text box from the clipboard", s.ime_clipboard);
-    Hint("A Chalice Glyph in the clipboard (eight letters or digits) fills the glyph box when it "
-         "opens: Enter confirms it, Backspace edits it, Esc cancels. Other text boxes are left alone.");
     static const char* prompt_modes[] = {"Follow the device in use", "PlayStation", "Keyboard and mouse", "Xbox",
                                          "Nintendo Switch"};
     int prompts = s.button_prompts;

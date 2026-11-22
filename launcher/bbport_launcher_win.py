@@ -411,13 +411,14 @@ COUNTER_COLORS = [('1', ('Colour-coded (green, orange, red)',)), ('0', ('Plain (
 # Effects that are taste, not performance: on Picture & performance (the others on All graphics).
 TASTE_EFFECTS = ('effect_chromatic_aberration', 'effect_dof', 'effect_motion_blur')
 INI_FLAGS = {'sharpen', 'object_motion', 'object_motion_cache', 'fsr_compatibility_options', 'show_fps', 'mute_unfocused', 'frame_gen_fit_display',
-             'sharp_ui', *(key for key, _t in READOUTS),
+             'sharp_ui', 'ime_clipboard', *(key for key, _t in READOUTS),
              *(k for k, _t, _o in EFFECTS + EXTRAS + CHEATS + TWEAKS)}
 INI_DEFAULTS = {'upscaler': 'fsr3', 'preset': '1', 'sharpen': '1', 'sharpness': '0.50',
                 'object_motion': '1', **{key: '0' for key, _t in READOUTS}, 'show_fps': '1', 'counter_colors': '1',
                 'output_res': '1920x1080', 'model_lod': '0',
                 'fsr411_backend': 'vk', 'fsr41_version': 'fsr412', 'object_motion_cache': '0', 'fsr_compatibility_options': '0',
                 'live_resolution': 'auto', 'hud_position': '100', 'sharp_ui': '0', 'fov': '43', 'mute_unfocused': '0',
+                'ime_clipboard': '0',
                 'button_prompts': 'auto',
                 'frame_gen': 'off', 'frame_gen_multiplier': '2', 'frame_gen_fit_display': '0',
                 **{key: '1' if on else '0' for key, _t, on in EFFECTS + EXTRAS + CHEATS + TWEAKS}}
@@ -4453,6 +4454,15 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    'bound to the game.'))
         self.row(f, _('In-game menu on the controller'), self.choice(f, 'menu_pad', 'app', MENU_PADS, 28),
                  _("Off if pressing both sticks or Select + Start opens it by accident."))
+        self.check(f, 'ime_clipboard', 'ini',
+                   _('Fill the text box from the clipboard (Chalice Glyphs)',
+                     'Заполнять поле ввода из буфера обмена (глифы Чаши)'),
+                   _("A Chalice Glyph in the clipboard — eight letters or digits — opens the game's glyph box "
+                     "already filled: Enter confirms it, Backspace edits it, Esc cancels. Names, messages and "
+                     "bloodstains are never filled.",
+                     'Глиф Чаши в буфере обмена (восемь букв или цифр) открывает поле ввода уже заполненным: '
+                     'Enter подтверждает, Backspace правит, Esc отменяет. Имена, сообщения и кровавые пятна '
+                     'не заполняются.'))
         # Only the settings of the device chosen in "You play with" (no switch of its own: one choice,
         # not two that look alike). A search jump shows the other device's part without changing it.
         played = self.var('play_with', 'app')

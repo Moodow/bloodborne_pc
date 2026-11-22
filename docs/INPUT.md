@@ -244,7 +244,7 @@ a box drawn over the picture; Enter or Cross accepts, Esc or Circle cancels, and
 mirrored in the window title while the box is open. There is no on-screen keyboard: a field that
 starts empty is filled with the player name (or "Hunter") so a controller alone can accept it.
 
-**Fill the game's text box from the clipboard** — PC Settings (Insert), *Other*; `bbport.ini`
+**Fill the game's text box from the clipboard** — the launcher's *Controls* page; `bbport.ini`
 `ime_clipboard=1`, or `BB_IME_CLIPBOARD=0|1`. When the clipboard holds exactly eight letters and
 digits — the shape of a Chalice Glyph — the glyph box opens with that text already in it, so a
 glyph copied from a browser is one Enter away. Spaces and line breaks are dropped and letters are
