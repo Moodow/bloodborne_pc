@@ -474,6 +474,10 @@ extern "C" void bbgpu_text_input_cancel(void) {
     if (g_window) g_window->CancelTextInput();
 }
 
+extern "C" int bbgpu_ime_clipboard_enabled(void) {
+    return BbSettings::Get().ime_clipboard ? 1 : 0;
+}
+
 extern "C" void bbgpu_mouse_take(BbMouseInput* out) {
     if (!out) return;
     if (!g_window) { std::memset(out, 0, sizeof(*out)); return; }

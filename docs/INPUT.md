@@ -237,6 +237,21 @@ analog_deadzone = leftjoystick, 1, 127   # device, inner, outer (1..127 each)
 `inner` to `outer` it ramps up linearly; at or above `outer` it is fully deflected. The default
 (`1, 127`) is effectively no deadzone, matching the behavior before this feature existed.
 
+## Text entry
+
+The game's text boxes (the player name, messages, a Chalice Glyph) are typed on the keyboard into
+a box drawn over the picture; Enter or Cross accepts, Esc or Circle cancels, and the line is
+mirrored in the window title while the box is open. There is no on-screen keyboard: a field that
+starts empty is filled with the player name (or "Hunter") so a controller alone can accept it.
+
+**Fill the game's text box from the clipboard** — PC Settings (Insert), *Other*; `bbport.ini`
+`ime_clipboard=1`, or `BB_IME_CLIPBOARD=0|1`. When the clipboard holds exactly eight letters and
+digits — the shape of a Chalice Glyph — the glyph box opens with that text already in it, so a
+glyph copied from a browser is one Enter away. Spaces and line breaks are dropped and letters are
+lower-cased; any other text leaves the box as it always was, so names, messages and bloodstains
+are never filled. The game's own "Search using Chalice Glyph: <glyph>" box then asks to confirm,
+so a wrong glyph is cancelled there. `BB_IME_TEXT` still replaces the whole dialog regardless.
+
 ## Reserved keys
 
 **Insert** (the settings menu) and **F9** (`BB_PAD_RECORD`) can never be bound to a game output,

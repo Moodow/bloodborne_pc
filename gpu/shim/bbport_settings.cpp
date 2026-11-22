@@ -93,6 +93,8 @@ void Set(Values& v, const std::string& key, const std::string& value) {
         v.debug_view = std::clamp(i, 0, DebugViewCount - 1);
     } else if (key == "mute_unfocused") {
         v.mute_unfocused = i != 0;
+    } else if (key == "ime_clipboard") {
+        v.ime_clipboard = i != 0;
     } else if (key == "button_prompts") {
         v.button_prompts = value == "playstation" ? PromptsPlayStation
                          : value == "keyboard"    ? PromptsKeyboard
@@ -192,6 +194,7 @@ void Load() {
         {"BB_UPSCALE_PRESET", "preset"},            {"BB_OBJECT_MOTION", "object_motion"},
         {"BB_FRAME_GEN", "frame_gen"},              {"BB_FRAME_GEN_MULTIPLIER", "frame_gen_multiplier"},
         {"BB_FRAME_GEN_FIT_DISPLAY", "frame_gen_fit_display"},
+        {"BB_IME_CLIPBOARD", "ime_clipboard"},
     };
     for (const auto& [env, key] : env_keys) {
         if (const char* value = std::getenv(env)) {
@@ -389,6 +392,7 @@ void Save() {
     std::fprintf(file, "model_lod=%d\noutput_res=%dx%d\n", v.model_lod.load(),
                  OutputWidths[v.output_res], OutputHeights[v.output_res]);
     std::fprintf(file, "mute_unfocused=%d\n", int(v.mute_unfocused.load()));
+    std::fprintf(file, "ime_clipboard=%d\n", int(v.ime_clipboard.load()));
     static constexpr const char* prompts[PromptsCount] = {"auto", "playstation", "keyboard", "xbox", "switch"};
     std::fprintf(file, "button_prompts=%s\n", prompts[std::clamp(v.button_prompts.load(), 0, PromptsCount - 1)]);
     // Read by run.py at start (hud_layout.py).
