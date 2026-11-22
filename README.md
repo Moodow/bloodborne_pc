@@ -59,7 +59,16 @@ URL，连接被拒，游戏提示「无法获取 Bloodborne 服务器信息」�
 [wiki 的 Release 页](https://github.com/Moodow/bloodborne_pc/wiki/Release)。装着上游启动器的安装
 不会自己切过来，需要手动解压一次本仓库的完整包。
 
-以上三类改动是本仓库与上游的全部差异。功能层面的一切都来自上游，本仓库没有新增游戏特性。
+### 4. 文本输入：粘贴与剪贴板
+
+地牢搜索要在祭坛里手打 8 位 glyph，而端口原来的输入框只接受键盘敲击，剪贴板里的内容进不去。
+
+- **Ctrl+V 粘贴**：任意输入框（角色名、留言、glyph）都能把剪贴板粘进来。输入框是单行的，换行与制表符被丢掉，中文等 UTF-8 字符原样保留。
+- **glyph 自动填充**：启动器 **Controls** 页的 `Fill the text box from the clipboard (Chalice Glyphs)`，等价于 `bbport.ini` 的 `ime_clipboard=1`。当剪贴板恰好是 8 位字母数字时，glyph 框一弹出就带着内容，回车确认；其它文本框不受影响。
+
+这两项只改变输入方式，不碰游戏内容：填入的 glyph 仍要过游戏自己的「Search using Chalice Glyph」确认框。
+
+以上四类改动是本仓库与上游的全部差异。游戏功能仍全部来自上游，本仓库新增的只有输入方式这一层。
 
 ## 下载
 

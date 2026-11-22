@@ -69,8 +69,23 @@ something to update to (see the wiki's Release page). An installation still runn
 launcher does not switch over by itself — the full package from this repository has to be unpacked
 over it once.
 
-Those three areas are the complete difference from upstream. Every feature comes from upstream; this
-fork adds no game features.
+### 4. Text input: paste and the clipboard
+
+Searching a Chalice Dungeon means typing an eight-character glyph at the altar, and the port's text
+box took keystrokes only — the clipboard never reached it.
+
+- **Ctrl+V pastes** into any text box (character name, messages, a glyph). The box is one line
+  long, so line breaks and tabs are dropped; UTF-8 text is kept as it is.
+- **The glyph box fills itself**: the launcher's **Controls** page has
+  `Fill the text box from the clipboard (Chalice Glyphs)`, the same as `ime_clipboard=1` in
+  `bbport.ini`. When the clipboard holds exactly eight letters and digits, the box opens with that
+  text already in it and Enter confirms; other text boxes are untouched.
+
+Both change how text arrives, not what the game does: a filled glyph still goes through the game's
+own "Search using Chalice Glyph" box.
+
+Those four areas are the complete difference from upstream. Every game feature comes from upstream;
+this fork adds a layer of text input, not game content.
 
 ## Downloads
 
