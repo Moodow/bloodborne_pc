@@ -1,0 +1,118 @@
+name: build-windows
+
+# GitHub 的 windows-latest 只有 2 核 7 GB，默认并行度会在链接阶段把内存打穿
+# （表现为 ninja 中途被杀、无报错、退出码 127）。这里把 build.sh 里的 ninja 固定成 -j2，
+# 并用 -g0 去掉调试信息降低单 TU 内存占用。
+#
+# 注意：不要用 shell 包装脚本替代 ninja —— CMake 会直接执行 `ninja --version` 探测编译器，
+# 包装脚本会报 "inappropriate file type or format"。
+
+on:
+  push:
+    branches:
+      - 'ci/**'
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 240
+    steps:
+      # 必须在 checkout 之前：否则子模块被 checkout 成 CRLF，而补丁是 LF，git apply 会失败
+      - name: 关闭 CRLF 转换
+        shell: bash
+        run: git config --global core.autocrlf false
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 1
+
+      - name: 归一化行尾
+        shell: bash
+        run: |
+          sed -i 's/\r$//' gpu/patches/fsr-vulkan/*.patch
+          find gpu/third_party/fsr-vulkan -type f \( -name '*.c' -o -name '*.h' \) -exec sed -i 's/\r$//' {} +
+
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2
+        with:
+          key: bbport-${{ hashFiles('gpu/CMakeLists.txt', 'gpu/bbnet/**', 'patches/**') }}
+          max-size: 2G
+
+      - uses: msys2/setup-msys2@v2
+        with:
+          msystem: CLANG64
+          update: true
+          install: >-
+            git patch zip unzip python
+            mingw-w64-clang-x86_64-toolchain
+            mingw-w64-clang-x86_64-cmake
+            mingw-w64-clang-x86_64-ninja
+            mingw-w64-clang-x86_64-pkgconf
+            mingw-w64-clang-x86_64-python
+            mingw-w64-clang-x86_64-vulkan-headers
+            mingw-w64-clang-x86_64-vulkan-loader
+            mingw-w64-clang-x86_64-vulkan-memory-allocator
+            mingw-w64-clang-x86_64-glslang
+            mingw-w64-clang-x86_64-sdl3
+            mingw-w64-clang-x86_64-fmt
+            mingw-w64-clang-x86_64-boost
+            mingw-w64-clang-x86_64-robin-map
+            mingw-w64-clang-x86_64-xxhash
+            mingw-w64-clang-x86_64-ffmpeg
+            mingw-w64-clang-x86_64-zydis
+            mingw-w64-clang-x86_64-spirv-tools
+            mingw-w64-clang-x86_64-spirv-headers
+            mingw-w64-clang-x86_64-spirv-cross
+            mingw-w64-clang-x86_64-protobuf
+            mingw-w64-clang-x86_64-openssl
+            mingw-w64-clang-x86_64-zlib
+            mingw-w64-clang-x86_64-miniupnpc
+            mingw-w64-clang-x86_64-nlohmann-json
+
+      - name: 编译
+        shell: msys2 {0}
+        run: |
+          git config --global core.autocrlf false
+          sed -i 's|ninja -C out/gpu|ninja -j2 -C out/gpu|' build.sh
+          grep -n "ninja -j2" build.sh
+          cmake -S gpu -B out/gpu -G Ninja \
+            -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+            -DCMAKE_C_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_COMPILER_LAUNCHER=ccache \
+            -DCMAKE_CXX_FLAGS_RELWITHDEBINFO="-O2 -g0" \
+            -DCMAKE_C_FLAGS_RELWITHDEBINFO="-O2 -g0" > /dev/null
+          bash -x build.sh > build-trace.txt 2>&1
+          rc=$?
+          if [ "$rc" -ne 0 ]; then
+            echo "=== build.sh rc=$rc ==="
+            echo "--- 磁盘 ---"; df -h . 2>/dev/null | tail -2
+            echo "--- 内存 ---"; cat /proc/meminfo 2>/dev/null | head -3 || true
+            echo "--- trace 尾部 ---"; tail -25 build-trace.txt
+            echo "--- gpu-build.log 尾部 ---"; tail -25 out/gpu-build.log 2>/dev/null || true
+            echo "--- 产物 ---"; ls -l out/gpu/*.exe 2>/dev/null || true
+          fi
+          exit $rc
+
+      - name: 组装运行时（exe + 递归依赖的 DLL）
+        shell: msys2 {0}
+        run: python tools/collect-runtime.py --exe out/gpu/bb-probe.exe --out dist/runtime.zip
+
+      - name: 失败时导出日志
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-logs
+          path: |
+            build-trace.txt
+            out/gpu-build.log
+          if-no-files-found: ignore
+
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: bbport-runtime
+          path: dist/runtime.zip
+          if-no-files-found: error
+          retention-days: 14

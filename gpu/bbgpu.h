@@ -39,6 +39,8 @@ int bbgpu_text_input_begin(const char *initial_utf8, const char *prompt_utf8);
 int bbgpu_text_input_poll(char *out_utf8, uint64_t size);
 /* bbport: the game closed the dialog itself (sceImeDialogAbort): the box on screen closes. */
 void bbgpu_text_input_cancel(void);
+/* 1 when the text dialog may fill itself from the clipboard (bbport.ini ime_clipboard). */
+int bbgpu_ime_clipboard_enabled(void);
 /* 1 while the in-game settings menu is open: the game's pad input is held neutral. */
 int bbgpu_overlay_captures_input(void);
 /* PC Settings in the game's System menu (gpu/shim/bbport_pc_menu.cpp, scripts/pc_menu.py): the

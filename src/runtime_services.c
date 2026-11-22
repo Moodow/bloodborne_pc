@@ -312,6 +312,30 @@ static void ime_complete(int end_status, const char *text) {
     ime.end_status=end_status; ime.finished=1; ime.running=0;
     printf("Runtime: ImeDialog %s%s%s\n",end_status ? "cancelled" : "text: ",end_status ? "" : text,"");
 }
+/* bbport: the text box fills itself from the clipboard (bbport.ini ime_clipboard). A Chalice
+ * Glyph is exactly eight letters and digits, so that shape alone is taken from the clipboard:
+ * read pasted with spaces or a line break, lower-cased, anything else is not a glyph and the box
+ * opens as it always did (names, messages, bloodstains are untouched). The game's own "Search
+ * using Chalice Glyph: <glyph>" box still asks to confirm, so a wrong glyph is cancelled there. */
+static int clipboard_glyph(char *out, size_t size, uint32_t max_length) {
+    if (!bbgpu_ime_clipboard_enabled()) return 0;
+    char *clip=SDL_GetClipboardText();
+    if (!clip) return 0;
+    size_t n=0;
+    int glyph=1;
+    for (const unsigned char *p=(const unsigned char *)clip; *p; ++p) {
+        char c=(char)*p;
+        if (c==' ' || c=='\t' || c=='\r' || c=='\n') continue;
+        if (c>='A' && c<='Z') c=(char)(c-'A'+'a');
+        else if (!((c>='a' && c<='z') || (c>='0' && c<='9'))) { glyph=0; break; }
+        if (n+1>=size) { glyph=0; break; }
+        out[n++]=c;
+    }
+    SDL_free(clip);
+    out[n]=0;
+    return glyph && n==8 && n<=max_length;
+}
+
 static ABI int32_t ime_init(const ImeParam *param, const void *extended) {
     (void)extended;
     if (!param || !param->buffer || !param->max_length) return (int32_t)0x80BC0004; /* IME INVALID_ADDRESS */
@@ -323,10 +347,13 @@ static ABI int32_t ime_init(const ImeParam *param, const void *extended) {
     utf16_to_utf8(param->title,128,prompt,sizeof(prompt));
     const char *preset=getenv("BB_IME_TEXT");
     if (preset) { ime_complete(0,preset); return 0; }
+    char clip[32];
+    const int from_clip=clipboard_glyph(clip,sizeof clip,ime.max_length);
+    if (from_clip) printf("Runtime: ImeDialog filled from the clipboard: %s\n",clip);
     /* An empty field starts with the player name (launcher) or "Hunter": a controller alone
      * can accept it (the port has no on-screen keyboard). */
     const char *name=getenv("BB_USER_NAME");
-    const char *start=initial[0] ? initial : name && *name ? name : "Hunter";
+    const char *start=from_clip ? clip : initial[0] ? initial : name && *name ? name : "Hunter";
     if (!bbgpu_text_input_begin(start,prompt[0] ? prompt : "Text")) ime_complete(0,start);
     else printf("Runtime: ImeDialog opened: shown on screen; keyboard Enter or Cross accepts, Esc or Circle cancels\n");
     return 0;

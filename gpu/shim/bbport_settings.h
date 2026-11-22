@@ -151,6 +151,10 @@ struct Values {
     std::atomic<bool> mute_unfocused{false};
     /// Keyboard and mouse button prompts: with the device in use (auto), or always one kind.
     std::atomic<int> button_prompts{PromptsAuto};
+    /// Fill the game's text box from the clipboard when it holds a Chalice Glyph (exactly eight
+    /// letters and digits, the shape of the glyph box). The box still opens, filled; Enter
+    /// confirms. Other text boxes are left alone (bbport.ini ime_clipboard, BB_IME_CLIPBOARD).
+    std::atomic<bool> ime_clipboard{false};
     // FSR 4 checks (menu): the provider's auto exposure, the jitter sign it is given.
     std::atomic<bool> fsr4_auto_exposure{true};
     std::atomic<bool> fsr4_invert_jitter{false};
