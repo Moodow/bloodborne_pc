@@ -1,0 +1,53 @@
+#!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Changing the launcher runs the launcher check first: 644 tests, the completeness check among them (every
+# text translated in thirteen languages, every attribute read somewhere, every page opens in both views).
+#
+# Why it is here: on 22 November 2026 the clipboard switch went out with an English label in the Chinese
+# launcher, a row unlike every other row on the Controls page, and a hint that lined up with neither column.
+# tests/test_launcher_translations.py::test_every_text_is_translated_everywhere would have failed at once;
+# it was never run, because running it was up to whoever committed.
+#
+# git config core.hooksPath .githooks   (once, in a clone that commits)
+# BBPORT_PYTHON=/path/to/python.exe     (a Python with tkinter; found otherwise)
+#
+# git commit --no-verify skips it. That is for a commit that cannot change what the check looks at, and the
+# reason goes in the commit message.
+
+set -u
+root=$(git rev-parse --show-toplevel) || exit 1
+cd "$root" || exit 1
+
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+# Only what the check covers: the launcher's own sources and its check.
+case "$staged" in
+    *launcher/*|*tools/check_launcher.py) ;;
+    *) exit 0 ;;
+esac
+
+py=
+for candidate in "${BBPORT_PYTHON:-}" python.exe python3 python \
+    "/c/Users/${USERNAME:-}/AppData/Local/Programs/Python/Python312/python.exe"; do
+    [ -n "$candidate" ] || continue
+    if "$candidate" -c 'import tkinter' >/dev/null 2>&1; then
+        py=$candidate
+        break
+    fi
+done
+if [ -z "$py" ]; then
+    echo 'pre-commit: no Python with tkinter found. Set BBPORT_PYTHON to one.' >&2
+    exit 1
+fi
+
+echo "pre-commit: the launcher check (python tools/check_launcher.py --quick)…"
+start=$(date +%s)
+out=$("$py" tools/check_launcher.py --quick 2>&1)
+rc=$?
+elapsed=$(( $(date +%s) - start ))
+if [ "$rc" -ne 0 ]; then
+    printf '%s\n' "$out" | tail -40 >&2
+    echo "pre-commit: the launcher check failed after ${elapsed}s. Fix it before committing." >&2
+    exit 1
+fi
+printf '%s\n' "$out" | grep -E 'Launcher check:|Result:' || true
+echo "pre-commit: the launcher check passed (${elapsed}s)."

@@ -4454,15 +4454,18 @@ class Launcher(bbport_setup.SetupMixin, bbport_help.HelpMixin, bbport_search.Sea
                    'bound to the game.'))
         self.row(f, _('In-game menu on the controller'), self.choice(f, 'menu_pad', 'app', MENU_PADS, 28),
                  _("Off if pressing both sticks or Select + Start opens it by accident."))
-        self.check(f, 'ime_clipboard', 'ini',
-                   _('Fill the text box from the clipboard (Chalice Glyphs)',
-                     'Заполнять поле ввода из буфера обмена (глифы Чаши)'),
-                   _("A Chalice Glyph in the clipboard — eight letters or digits — opens the game's glyph box "
-                     "already filled: Enter confirms it, Backspace edits it, Esc cancels. Names, messages and "
-                     "bloodstains are never filled.",
-                     'Глиф Чаши в буфере обмена (восемь букв или цифр) открывает поле ввода уже заполненным: '
-                     'Enter подтверждает, Backspace правит, Esc отменяет. Имена, сообщения и кровавые пятна '
-                     'не заполняются.'))
+        # A row like the ones above it: the switch sits in the column the drop-downs sit in, so its hint lines
+        # up with theirs. (self.check puts both on the left, under the switch, which looked off on this page.)
+        self.row(f, _('Clipboard', 'Буфер обмена'),
+                 ttk.Checkbutton(f, text=_('Fill the glyph box', 'Заполнять поле глифа'),
+                                 variable=self.var('ime_clipboard', 'ini')),
+                 _("A Chalice Glyph in the clipboard — eight letters or digits — fills the game's glyph box "
+                   "as it opens: Enter confirms it, Backspace edits it, Esc cancels. Names, messages and "
+                   "bloodstains are never filled.",
+                   'Глиф Чаши в буфере обмена — восемь букв или цифр — заполняет поле ввода при открытии: '
+                   'Enter подтверждает, Backspace правит, Esc отменяет. Имена, сообщения и кровавые пятна '
+                   'не заполняются.'),
+                 key='ime_clipboard')
         # Only the settings of the device chosen in "You play with" (no switch of its own: one choice,
         # not two that look alike). A search jump shows the other device's part without changing it.
         played = self.var('play_with', 'app')

@@ -114,6 +114,8 @@ WORDS = {
     'discord_stats': 'discord stats statistics level echoes blood echoes insight blut echoe einsicht',
     'menu_key': 'overlay menu insert hotkey taste einstellungen ingame in-game key rebind',
     'menu_pad': 'overlay menu l3 r3 select start controller gamepad combo',
+    'ime_clipboard': 'clipboard zwischenablage einfg einfuegen paste pasteboard glyph chalice kelch glif '
+                     'inscription copy ctrl+v',
     'windows_title_bar': 'titelleiste title bar caption rahmen fensterrahmen windows',
     'goal': 'ziel goal flussig ausgewogen leise smooth balanced quiet laptop akku',
     'play_with': 'spiele mit play with eingabe input gerat device controller gamepad tastatur keyboard maus mouse '

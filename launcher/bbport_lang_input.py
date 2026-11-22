@@ -127,3 +127,91 @@ TEXTS = {
     ),
 }
 TRANSLATIONS = {language: dict(zip(KEYS, texts, strict=True)) for language, texts in TEXTS.items()}
+
+# The clipboard fill (Controls; setting ime_clipboard). Its own block: added after the four keys above were
+# already in thirteen languages, and Russian is beside the English in bbport_launcher_win.py like theirs.
+CLIPBOARD_KEYS = (
+    'Clipboard',
+    'Fill the glyph box',
+    "A Chalice Glyph in the clipboard — eight letters or digits — fills the game's glyph box as it opens: "
+    'Enter confirms it, Backspace edits it, Esc cancels. Names, messages and bloodstains are never filled.',
+)
+CLIPBOARD_TEXTS = {
+    'de': (
+        'Zwischenablage',
+        'Kelchfeld füllen',
+        'Ein Kelchsymbol in der Zwischenablage – acht Buchstaben oder Ziffern – füllt das Kelchfeld des '
+        'Spiels schon beim Öffnen: Enter bestätigt, Backspace ändert, Esc bricht ab. Namen, Nachrichten '
+        'und Blutflecken werden nie gefüllt.',
+    ),
+    'ar': (
+        'الحافظة',
+        'ملء حقل الرمز',
+        'رمز الكأس في الحافظة — ثمانية أحرف أو أرقام — يملأ حقل الرمز في اللعبة عند فتحه: Enter يؤكد، '
+        'Backspace يعدّل، Esc يلغي. لا تُملأ الأسماء والرسائل وآثار الدم أبدًا.',
+    ),
+    'es': (
+        'Portapapeles',
+        'Rellenar el campo del glifo',
+        'Un glifo del cáliz en el portapapeles —ocho letras o números— rellena el campo del glifo del juego '
+        'al abrirse: Intro lo confirma, Retroceso lo edita, Esc lo cancela. Los nombres, los mensajes y las '
+        'manchas de sangre nunca se rellenan.',
+    ),
+    'pt': (
+        'Área de transferência',
+        'Preencher o campo do glifo',
+        'Um Glifo de Cálice na área de transferência — oito letras ou números — preenche o campo do glifo do '
+        'jogo ao abrir: Enter confirma, Backspace edita, Esc cancela. Nomes, mensagens e manchas de sangue '
+        'nunca são preenchidos.',
+    ),
+    'fr': (
+        'Presse-papiers',
+        'Remplir le champ du glyphe',
+        "Un glyphe de calice dans le presse-papiers — huit lettres ou chiffres — remplit le champ du glyphe "
+        "du jeu dès son ouverture : Entrée confirme, Retour arrière modifie, Échap annule. Les noms, les "
+        'messages et les taches de sang ne sont jamais remplis.',
+    ),
+    'it': (
+        'Appunti',
+        'Riempi il campo del glifo',
+        "Un glifo del calice negli appunti — otto lettere o cifre — riempie il campo del glifo del gioco "
+        "all'apertura: Invio lo conferma, Backspace lo modifica, Esc lo annulla. Nomi, messaggi e macchie "
+        'di sangue non vengono mai riempiti.',
+    ),
+    'pl': (
+        'Schowek',
+        'Wypełnij pole glifu',
+        'Glif kielicha w schowku — osiem liter lub cyfr — wypełnia pole glifu w grze już przy otwarciu: '
+        'Enter zatwierdza, Backspace poprawia, Esc anuluje. Imiona, wiadomości i plamy krwi nigdy nie są '
+        'wypełniane.',
+    ),
+    'tr': (
+        'Pano',
+        'Glif alanını doldur',
+        'Panodaki bir Kadeh Glifi — sekiz harf veya rakam — oyunun glif alanını açıldığı anda doldurur: '
+        'Enter onaylar, Backspace düzenler, Esc iptal eder. İsimler, mesajlar ve kan lekeleri asla '
+        'doldurulmaz.',
+    ),
+    'zh': (
+        '剪贴板',
+        '自动填入圣杯铭文',
+        '剪贴板里放着圣杯铭文（8 个字母或数字）时，游戏一打开铭文输入框就已填好：Enter 确认，'
+        'Backspace 修改，Esc 取消。角色名、留言和血迹从不填入。',
+    ),
+    'ja': (
+        'クリップボード',
+        '聖杯文字を自動入力',
+        'クリップボードに聖杯文字（英数字8文字）があると、ゲームの聖杯文字の入力欄が開いた時点で入力済'
+        'みになります：Enter で確定、Backspace で修正、Esc で取り消し。名前・メッセージ・血痕には入力'
+        'しません。',
+    ),
+    'ko': (
+        '클립보드',
+        '성배 문자 자동 입력',
+        '클립보드에 성배 문자(영문·숫자 8자)가 있으면 게임의 성배 문자 입력란이 열릴 때 이미 채워져 있습'
+        '니다: Enter 확인, Backspace 수정, Esc 취소. 이름, 메시지, 핏자국에는 채우지 않습니다.',
+    ),
+}
+for _language, _texts in CLIPBOARD_TEXTS.items():
+    assert len(_texts) == len(CLIPBOARD_KEYS), (_language, len(_texts), len(CLIPBOARD_KEYS))
+    TRANSLATIONS.setdefault(_language, {}).update(zip(CLIPBOARD_KEYS, _texts))
