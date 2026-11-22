@@ -161,19 +161,44 @@ jobs:
             out/gpu-build.log
           if-no-files-found: ignore
 
+      # 玩家在发布页第一眼看到的必须是「这一版改了什么」。标签的 annotated message 就是那段内容：
+      # 没有它，发布页只剩文件表，玩家无从判断要不要更新。文件表与上游说明由这里统一拼上。
+      - name: 本版说明（标签的 annotated message + 文件表）
+        shell: bash
+        env:
+          TAG: ${{ github.event.inputs.tag || github.ref_name }}
+        run: |
+          git fetch --tags --force >/dev/null 2>&1 || true
+          git tag -l --format='%(contents)' "$TAG" > tag-notes.md || true
+          {
+            if [ -n "$(tr -d '[:space:]' < tag-notes.md)" ]; then
+              sed -e 's/[[:space:]]*$//' tag-notes.md
+              echo
+            else
+              echo '> 这个标签没有 annotated message，本版内容见下面的提交列表。'
+              echo
+            fi
+            echo '## 文件'
+            echo
+            echo '| 文件 | 说明 |'
+            echo '| --- | --- |'
+            echo '| `bbport-windows.zip` | 完整包：启动器 + 4 个可执行文件 + 全部运行库，解压即用 |'
+            echo '| `bb-probe-only.zip` | 精简包：只有 `bb-probe.exe`，覆盖到 `bin\` 即可更新主程序 |'
+            echo '| `fsr4vk-*-src.zip` | 第三方对应源码（随完整包分发） |'
+            echo
+            echo '---'
+            echo
+            echo '基于上游 [`Supermedo/bloodborne_pc`](https://github.com/Supermedo/bloodborne_pc) 的个人构建。'
+          } > release-body.md
+          echo '--- 将发布的本版说明 ---'
+          head -25 release-body.md
+
       - name: 发布 Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag || github.ref_name }}
           name: Bloodborne PC ${{ github.event.inputs.tag || github.ref_name }}
-          body: |
-            基于上游 `Supermedo/bloodborne_pc` 的个人构建。
-
-            | 文件 | 说明 |
-            | --- | --- |
-            | `bbport-windows.zip` | 完整包，解压即用，含启动器 |
-            | `bb-probe-only.zip` | 精简包，仅主程序，依赖已静态链接 |
-            | `fsr4vk-*-src.zip` | 第三方对应源码（随完整包分发） |
+          body_path: release-body.md
           files: |
             dist/bbport-windows.zip
             dist/fsr4vk-*-src.zip
