@@ -144,7 +144,19 @@ jobs:
           # MSYS2 的 Python 在 Windows 上默认按 cp1252 输出，脚本里的中文提示会抛
           # UnicodeEncodeError: 'charmap' codec can't encode。
           PYTHONUTF8: "1"
-        run: python tools/collect-runtime.py --exe out/gpu/bb-probe.exe --out dist/runtime.zip
+        run: |
+          # collect-runtime.py 的 MSYS_BIN 默认写死 "/clang64/bin"（Windows 原生 python 判假）和
+          # C:/msys64/clang64/bin（setup-msys2 的真实位置不一定是这里），两次回退都失败后 15 个 DLL
+          # 全部 missing、产物只剩 exe——装到玩家机器上就是 "找不到 libcrypto-4-x64.dll"。
+          # cygpath 拿的是当前 msys2 shell 的真实前缀，任何安装位置都对。
+          export MSYS_BIN="$(cygpath -w /clang64/bin)"
+          echo "MSYS_BIN=$MSYS_BIN"
+          ls "$MSYS_BIN"/libcrypto*.dll "$MSYS_BIN"/SDL3.dll || true
+          python tools/collect-runtime.py --exe out/gpu/bb-probe.exe --out dist/runtime.zip
+          # 残缺的运行时包必须在 CI 就失败，而不是到了玩家机器上才报缺 DLL。
+          files=$(python -c "import zipfile;print(len(zipfile.ZipFile('dist/runtime.zip').namelist()))")
+          echo "runtime.zip: $files 个文件"
+          [ "$files" -ge 50 ] || { echo "DLL 没进包（MSYS_BIN=$MSYS_BIN）" >&2; exit 1; }
 
       - name: 失败时导出日志
         if: failure()
