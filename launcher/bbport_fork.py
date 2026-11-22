@@ -25,7 +25,7 @@ RELEASES_LIST_API = f'https://api.github.com/repos/{REPOSITORY}/releases?per_pag
 # This fork's own revision of the launcher's VERSION (FORK_REV in this file, the VERSION in bbport_launcher_win.py):
 # the <n> of the release tag windows-v<VERSION>-moodow.<n>. 0 stands for a plain upstream build, which is what an
 # upstream checkout of this module without a fork would use.
-FORK_REV = 2
+FORK_REV = 3
 FORK_MARK = '-moodow'
 
 # What a release tag starts with; the rest of it is the version (tag_version).
