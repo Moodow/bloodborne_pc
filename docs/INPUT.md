@@ -241,7 +241,9 @@ analog_deadzone = leftjoystick, 1, 127   # device, inner, outer (1..127 each)
 
 The game's text boxes (the player name, messages, a Chalice Glyph) are typed on the keyboard into
 a box drawn over the picture; Enter or Cross accepts, Esc or Circle cancels, and the line is
-mirrored in the window title while the box is open. There is no on-screen keyboard: a field that
+mirrored in the window title while the box is open. **Ctrl+V** (Cmd+V) pastes the clipboard into
+it — SDL passes typed text only, never the clipboard's — with line breaks and control characters
+dropped, since the box is one line long. There is no on-screen keyboard: a field that
 starts empty is filled with the player name (or "Hunter") so a controller alone can accept it.
 
 **Fill the game's text box from the clipboard** — the launcher's *Controls* page; `bbport.ini`
